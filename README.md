@@ -4,4 +4,4 @@ WIP...
 
 ## License
 
-The [MIT License](https://sunoru.mit-license.org/).
+The [MIT License](./LICENSE).
