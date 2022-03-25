@@ -13,41 +13,42 @@ open_camera(
     gray=true
 ) = _open_video(VideoIO.opencamera, device; gray = gray)
 
-to_toml(x::Union{Integer, AbstractFloat, Bool, Dates.DateTime, Dates.Time, Dates.Date}) = x
-to_toml(dict::AbstractDict) = Dict(
-    key => to_toml(value)
+_to_toml(x::Union{Integer, AbstractFloat, Bool, Dates.DateTime, Dates.Time, Dates.Date}) = x
+_to_toml(dict::AbstractDict) = Dict(
+    key => _to_toml(value)
     for (key, value) in dict
 )
-to_toml(data) = Dict(
-    string(key) => to_toml(getfield(data, key))
+_to_toml(data) = Dict(
+    string(key) => _to_toml(getfield(data, key))
     for key in fieldnames(typeof(data))
 )
-to_toml(source::AbstractVsSource) = Dict(
+_to_toml(params::Union{AbstractVsSource, AbstractVsStrategy}) = Dict(
     "type": typeof(source).name.name,
-    "data": invoke(to_toml, Tuple{Any}, source)
+    "params": invoke(_to_toml, Tuple{Any}, params)
 )
 function save_config(config::VsConfig, filename)
     open(filename, "w") do fo
-        TOML.save(to_toml, fo, config)
+        TOML.save(_to_toml, fo, config)
     end
 end
 
 _to_generator(d::AbstractDict) = (Symbol(key) => value for (key, value) in d)
 
-function _load_source(source_data)
-    type_name = Symbol(source_data["type"])
-    data = source_data["data"]
+function _load_T(base_type, data)
+    type_name = Symbol(data["type"])
+    params = data["params"]
     cmp_type(x) = false
     cmp_type(x::DataType) = x.name.name == type_name
-    T = findfirst(_get_type, subtypes(AbstractVsSource))
-    T(; _to_generator(data)...)
+    T = findfirst(_get_type, subtypes(base_type))
+    T(; _to_generator(params)...)
 end
 
 function load_config(filename)
     data = open(filename, "r") do fo
         TOML.parse(fo)
     end
-    data["source"] = _load_source(data["source"])
+    data["strategy"] = _load_T(AbstractVsStrategy, data["strategy"])
+    data["source"] = _load_T(AbstractVsSource, data["source"])
     VsConfig(; _to_generator(data)...)
 end
 

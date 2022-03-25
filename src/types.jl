@@ -1,39 +1,95 @@
+abstract type AbstractVsStrategy end
+
 """Abstract type for sources (e.g., a game)."""
 abstract type AbstractVsSource end
 
 """Abstract type for scenes."""
 abstract type AbstractVsScene end
 
-"""Abstract type for contexts."""
-abstract type AbstractVsContext end
+"""Abstract type for streams. Should support `eof`, `seek` and `skipframes`."""
+abstract type AbstractVsStream end
 
-Base.@kwdef struct VsStream
+Base.@kwdef struct VsStream <: AbstractVsStream
     video::VideoIO.VideoReader
 end
 @forward VsStream.video Base.eof, Base.seek, Base.seekstart, Base.seekend, VideoIO.skipframe, VideoIO.skipframes
 
+"""Frame."""
 Base.@kwdef struct VsFrame{T <: AbstractMatrix}
     image::T
+    index::Int
+end
+image(frame::VsFrame) = frame.image
+index(frame::VsFrame) = frame.index
+
+Base.@kwdef struct VsContextData
+    dict::Dict{Symbol, Any} = Dict()
+end
+getproperty(data::VsContextData, key::Symbol) = getfield(data, :dict)[key]
+setproperty(data::VsContextData, key::Symbol, value) = getfield(data, :dict)[key] = value
+
+
+Base.@kwdef mutable struct VsConfig{
+    TStrategy <: AbstractVsStrategy,
+    TSource <: AbstractVsSource,
+}
+    num_skip_frames::Int = 59
+    use_gray_image::Bool = true
+    language::String = "en"
+    ocr_language::String = "eng"
+    strategy::TStrategy
+    source::TSource
+end
+
+"""Context."""
+Base.@kwdef mutable struct VsContext{
+    TStrategy <: AbstractVsStrategy,
+    TSource <: AbstractVsSource,
+    TStream <: Union{AbstractVsStream, Nothing}
+}
+    config::VsConfig{TStrategy, TSource}
+    stream::TStream
+    ocr_instance::TessInst
+    current_frame::Union{VsFrame, Nothing} = nothing
+    current_scene::Union{AbstractVsScene, Nothing} = nothing
+    data::Dict{Symbol, Any} = VsContextData()
 end
 
 """
-    vs_init(config)
+    vs_init!(context)
 
-Initialize. Returns a context.
+Initialize.
 """
-vs_init(::VsConfig{T}) where T = error("Unsupported source: $T")
-
-"""
-    vs_parse(context, frame, config)
-
-Parse a frame for a source.
-"""
-vs_parse(::AbstractVsContext, ::VsFrame, ::VsConfig{T}) where T = error("Unsupported source: $T")
+vs_init!(::T) where T <: VsContext =
+    error("Not implemented: vs_init!($T)")
 
 
 """
-    vs_result(context, config)
+    vs_parse_frame!(context, frame)
+
+Parse a frame. Returns a `Union{AbstractVsScene, Nothing}`.
+"""
+vs_parse_frame!(::T, ::VsFrame) where T <: VsContext =
+    error("Not implemented: vs_parse_frame!($T, VsFrame)")
+
+"""
+    vs_update!(context, scene)
+
+Store `scene` in `context`.
+"""
+vs_update!(::T, ::TS) where {T <: VsContext, TS <: AbstractVsScene} =
+    error("Not implemented: vs_parse_frame!($T, $TS)")
+
+"""
+    vs_result(context)
 
 Fetch the result.
 """
-vs_result(::AbstractVsContext, ::VsConfig{T}) where T = error("Unsupported source: $T")
+vs_result(::T) where T <: VsContext = error("Not implemented: vs_result($T)")
+
+vs_tryparse_scene(
+    ::Type{<:AbstractVsScene},
+    ::VsFrame,
+    ::VsContext
+) = nothing
+
