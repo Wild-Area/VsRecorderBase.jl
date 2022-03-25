@@ -15,6 +15,7 @@ MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Tesseract = "11879493-52b3-4e20-990d-281c54a395a1"
 VideoIO = "d6d074c3-1acf-5d4c-9a43-ef38773959a2"
+YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
 Images = "0.24"

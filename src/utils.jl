@@ -28,3 +28,5 @@ image_distance(
     no_blur ? BlurredImage(img1, img1) : blur(img1, ctx),
     no_blur ? BlurredImage(img2, img2) : blur(img2, ctx),
 )
+
+const Missable{T} = Union{Nothing, T}

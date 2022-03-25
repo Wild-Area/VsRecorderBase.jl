@@ -56,6 +56,14 @@ Base.@kwdef mutable struct VsContext{
 end
 
 """
+    vs_setup(source_type; kwargs...)
+
+Create a `VsConfig` with given args.
+"""
+vs_setup(::Type{T}; kwargs...) where T <: AbstractVsSource =
+    error("Not implemented: vs_setup($T)")
+
+"""
     vs_init!(context)
 
 Initialize.
