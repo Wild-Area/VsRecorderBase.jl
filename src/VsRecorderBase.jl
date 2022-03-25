@@ -6,7 +6,6 @@ using FileIO: @format_str
 using VideoIO, Images, Tesseract
 using ImageFiltering
 using MacroTools: @forward
-using SimpleI18n
 
 export AbstractVsStrategy, AbstractVsSource, AbstractVsScene, AbstractVsStream,
     VsStream, VsFrame,
