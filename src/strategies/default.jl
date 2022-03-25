@@ -14,15 +14,20 @@ using ..VsRecorderBase: AbstractVsStrategy, AbstractVsSource,
 import ..VsRecorderBase: vs_init!, vs_parse_frame!
 
 
-"""Default strategy"""
+"""Default strategy
+
+The features should be almost exactly found in the input image.
+
+A weighted mean squared error is used for the distance between subsections.
+
+D = sum((I1 - I2) .^ 2 .* M) / sum(M)
+"""
 Base.@kwdef struct DefaultStrategy <: AbstractVsStrategy
     match_threshold::Float64 = 0.05
 end
 
 """
 Simple feature descriptor of a scene.
-
-D = (I1 .- I2) .* M
 """
 struct SimpleFeature{T <: Union{Gray{Float32}, RGB{Float32}}}
     image::Matrix{T}
@@ -53,10 +58,10 @@ function _create_descriptors(ctx::VsContext{DefaultStrategy})
 end
 
 _difference(img1::Matrix{Gray{Float32}}, img2, mask, mask_sum) =
-    sum(abs.(img1 .- img2) .* mask) / mask_sum
+    sum(((img1 .- img2) .^ 2) .* mask) / mask_sum
 
 function _difference(img1::Matrix{RGB{Float32}}, img2, mask, mask_sum)
-    s = sum(abs.(img1 .- img2) .* mask) / mask_sum
+    s = sum(((img1 .- img2) .^ 2) .* mask) / mask_sum
     norm([red(s), green(s), blue(s)])
 end
 
@@ -68,7 +73,7 @@ function _get_scene_type(ctx, img)
     closest_scene_type, closest_distance = nothing, typemax(Float32)
     for (scene_type, desc) in descriptors
         distance = _difference(img, desc.image, desc.mask, desc.mask_sum)
-        distance < threshold
+        distance < threshold && return scene_type
         if distance < closest_distance
             closest_scene_type = scene_type
             closest_distance = distance

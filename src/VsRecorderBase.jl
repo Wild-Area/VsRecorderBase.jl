@@ -3,7 +3,8 @@ module VsRecorderBase
 import Dates, TOML
 using FileIO: @format_str
 
-using VideoIO, Images, Tesseract, ImageFeatures
+using VideoIO, Images, Tesseract
+using ImageFiltering
 using MacroTools: @forward
 using SimpleI18n
 
@@ -27,8 +28,6 @@ include("ocr.jl")
 export DefaultStrategy
 include("strategies/default.jl")
 using .DefaultStrategyModule: DefaultStrategy
-
-include("strategies/brief.jl")
 
 include("main.jl")
 include("api.jl")

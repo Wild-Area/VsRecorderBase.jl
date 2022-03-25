@@ -29,14 +29,14 @@ getproperty(data::VsContextData, key::Symbol) = getfield(data, :dict)[key]
 setproperty(data::VsContextData, key::Symbol, value) = getfield(data, :dict)[key] = value
 
 
-Base.@kwdef mutable struct VsConfig{
+Base.@kwdef struct VsConfig{
     TStrategy <: AbstractVsStrategy,
     TSource <: AbstractVsSource,
 }
     num_skip_frames::Int = 59
     use_gray_image::Bool = true
-    language::String = "en"
     ocr_language::String = "eng"
+    gaussian_filter_σ::Float64 = 0.5
     strategy::TStrategy
     source::TSource
 end
