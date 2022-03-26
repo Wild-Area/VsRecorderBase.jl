@@ -29,4 +29,26 @@ image_distance(
     no_blur ? BlurredImage(img2, img2) : blur(img2, ctx),
 )
 
-const Missable{T} = Union{Nothing, T}
+const Missable{T} = Union{Missing, T}
+
+"""
+    @missable mutable struct SomeStruct
+        fields...
+    end
+
+Make all fields that do not have a default value missable/optional.
+"""
+macro missable(expr)
+    @assert expr.head ≡ :struct
+    fields = expr.args[3].args
+    for i in 1:length(fields)
+        field = fields[i]
+        if field isa Expr && field.head ≡ :(::)
+            field.args[2] = :(
+                Union{Missing, $(field.args[2])}
+            )
+            fields[i] = :($(field) = missing)
+        end
+    end
+    Base.@kwdef(expr)
+end
