@@ -6,26 +6,27 @@ abstract type AbstractVsSource end
 """Abstract type for scenes."""
 abstract type AbstractVsScene end
 
-"""Abstract type for streams. Should support `eof`, `seek` and `skipframes`."""
+"""Abstract type for streams. Should support the common functions."""
 abstract type AbstractVsStream end
 
 Base.@kwdef struct VsStream <: AbstractVsStream
     video::VideoIO.VideoReader
 end
-@forward VsStream.video Base.eof, Base.seek, Base.seekstart, Base.seekend, VideoIO.skipframe, VideoIO.skipframes
+@forward VsStream.video Base.close, Base.eof, Base.seek, Base.seekstart, Base.seekend,
+    VideoIO.skipframe, VideoIO.skipframes, VideoIO.framerate
 
 """Frame."""
 Base.@kwdef struct VsFrame{T <: AbstractMatrix}
     image::T
-    index::Int
+    time::Rational{Int64} = 0
 end
 image(frame::VsFrame) = frame.image
-index(frame::VsFrame) = frame.index
+time(frame::VsFrame) = frame.time
 
 Base.@kwdef struct VsContextData
     dict::Dict{Symbol, Any} = Dict()
 end
-getproperty(data::VsContextData, key::Symbol) = getfield(data, :dict)[key]
+getproperty(data::VsContextData, key::Symbol) = get(getfield(data, :dict), key, nothing)
 setproperty(data::VsContextData, key::Symbol, value) = getfield(data, :dict)[key] = value
 
 
@@ -33,6 +34,8 @@ Base.@kwdef struct VsConfig{
     TStrategy <: AbstractVsStrategy,
     TSource <: AbstractVsSource,
 }
+    # in seconds
+    process_interval::Float64 = 1.0
     num_skip_frames::Int = 59
     use_gray_image::Bool = true
     ocr_language::String = "eng"
@@ -52,6 +55,7 @@ Base.@kwdef mutable struct VsContext{
     ocr_instance::TessInst
     current_frame::Union{VsFrame, Nothing} = nothing
     current_scene::Union{AbstractVsScene, Nothing} = nothing
+    current_time_skippable::Float64 = 0.0
     data::Dict{Symbol, Any} = VsContextData()
 end
 

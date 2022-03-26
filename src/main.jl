@@ -17,14 +17,16 @@ end
 
 function parse_stream(config::VsConfig, stream::VsStream)
     ctx = initialize(config, stream)
-    num_skip_frames = config.num_skip_frames
+    process_interval = config.process_interval
+    fps = VideoIO.framerate(stream)
     while !eof(stream)
         frame = read_frame(stream)
         scene = parse_frame!(ctx, frame)
         if !isnothing(scene)
             vs_update!(ctx, scene)
         end
-        skipframes(stream, num_skip_frames, throwEOF = false)
+        to_skip = fps * max(process_interval, ctx.current_time_skippable)
+        skipframes(stream, Int(ceil(to_skip)), throwEOF = false)
     end
     vs_result(ctx)
 end

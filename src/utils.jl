@@ -5,6 +5,7 @@ struct BlurredImage{T1 <: AbstractMatrix, T2 <: AbstractMatrix}
     image::T1
     original::T2
 end
+BlurredImage(image) = BlurredImage(image, image)
 
 blur(img::BlurredImage, _) = img
 blur(img::AbstractMatrix, σ) = BlurredImage(imfilter(img, KernelFactors.gaussian((σ, σ))), img)
@@ -12,7 +13,7 @@ blur(img::AbstractMatrix, ctx::VsContext) = blur(img, ctx.config.gaussian_filter
 
 function image_distance(
     img1::BlurredImage, img2::BlurredImage,
-    ::Union{VsContext, Nothing} = nothing;
+    ::VsContext = nothing;
     no_blur = false
 )
     I1 = no_blur ? img1.original : img1.image
@@ -25,9 +26,23 @@ image_distance(
     ctx::VsContext;
     no_blur = false
 ) = image_distance(
-    no_blur ? BlurredImage(img1, img1) : blur(img1, ctx),
-    no_blur ? BlurredImage(img2, img2) : blur(img2, ctx),
+    no_blur ? BlurredImage(img1) : blur(img1, ctx),
+    no_blur ? BlurredImage(img2) : blur(img2, ctx),
 )
+
+"""
+    tempalte_match(template, image; σ = 0.5, no_blur = false)
+
+Match `template` in `image`.
+"""
+function tempalte_match(template, img; σ = 0.5, no_blur = false)
+    template, img = if no_blur
+        BlurredImage(template), BlurredImage(img)
+    else
+        blur(template, σ) : blur(img2, σ)
+    end
+
+end
 
 const Missable{T} = Union{Missing, T}
 
@@ -43,9 +58,16 @@ macro missable(expr)
     fields = expr.args[3].args
     for i in 1:length(fields)
         field = fields[i]
-        if field isa Expr && field.head ≡ :(::)
-            field.args[2] = :(Missable{$(field.args[2])})
+        field isa Expr || continue
+        if field.head ≡ :(::)
+            field.args[2] = :(Missable{$(esc(field.args[2]))})
             fields[i] = :($(field) = missing)
+        elseif field.head ≡ :(=)
+            arg1 = field.args[1]
+            if arg1 isa Expr && arg1.head ≡ :(::)
+                arg1.args[2] = esc(arg1.args[2])
+            end
+            field.args[2] = esc(field.args[2])
         end
     end
     quote

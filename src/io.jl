@@ -6,15 +6,16 @@ _open_video(open_func, file; gray) = VsStream(
     end
 )
 
-open_video(file; gray=true) = _open_video(VideoIO.openvideo, file; gray = gray)
+open_video(file; gray = true) = _open_video(VideoIO.openvideo, file; gray = gray)
 
 open_camera(
     device = VideoIO.DEFAULT_CAMERA_DEVICE[];
-    gray=true
+    gray = true
 ) = _open_video(VideoIO.opencamera, device; gray = gray)
 
 read_frame(stream::VsStream) = VsFrame(
-    image = read(stream.video)
+    image = read(stream.video),
+    time = position(stream.video)
 )
 
 # Serialize & Deserialize YAML for custom types with missable fields
