@@ -44,11 +44,11 @@ macro missable(expr)
     for i in 1:length(fields)
         field = fields[i]
         if field isa Expr && field.head ≡ :(::)
-            field.args[2] = :(
-                Union{Missing, $(field.args[2])}
-            )
+            field.args[2] = :(Missable{$(field.args[2])})
             fields[i] = :($(field) = missing)
         end
     end
-    Base.@kwdef(expr)
+    quote
+        Base.@kwdef $expr
+    end
 end
