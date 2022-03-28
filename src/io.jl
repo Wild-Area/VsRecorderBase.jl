@@ -18,6 +18,14 @@ read_frame(stream::VsStream) = VsFrame(
     time = position(stream.video)
 )
 
+function load_image(file; gray = true)
+    img = load(file)
+    if gray
+        img = to_gray_image(img)
+    end
+    img
+end
+
 # Serialize & Deserialize YAML for custom types with missable fields
 import YAML: _print
 

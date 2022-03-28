@@ -20,11 +20,20 @@ export image, time
 export vs_setup, vs_init!, vs_parse_frame!, vs_update!, vs_result, vs_tryparse_scene
 include("types.jl")
 
-export to_gray_image, blur, image_distance
-export Missable, @missable
+export to_gray_image,
+    image_rect,
+    blur, image_distance,
+    tempalte_match_all, tempalte_match,
+    table_search
+export Missable, Nullable, @missable, @nullable
 include("utils.jl")
 
-export open_video, open_camera, save_config, load_config, read_frame,
+export SpriteSheet
+include("data.jl")
+
+export open_video, open_camera,
+    read_frame, load_image,
+    save_config, load_config,
     serialize, deserialize
 include("io.jl")
 

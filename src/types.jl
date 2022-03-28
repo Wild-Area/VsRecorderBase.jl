@@ -39,7 +39,6 @@ Base.@kwdef struct VsConfig{
     num_skip_frames::Int = 59
     use_gray_image::Bool = true
     ocr_language::String = "eng"
-    gaussian_filter_σ::Float64 = 0.5
     strategy::TStrategy
     source::TSource
 end
