@@ -18,16 +18,17 @@ end
 """Frame."""
 Base.@kwdef struct VsFrame{T <: AbstractMatrix}
     image::T
-    time::Rational{Int64} = 0
+    time::Rational{Int64} = 0 // 1
 end
 image(frame::VsFrame) = frame.image
 time(frame::VsFrame) = frame.time
+Base.show(io::IO, mime::MIME"image/png", s::VsFrame; kwargs...) = show(io, mime, s.image; kwargs...)
 
 Base.@kwdef struct VsContextData
     dict::Dict{Symbol, Any} = Dict()
 end
-getproperty(data::VsContextData, key::Symbol) = get(getfield(data, :dict), key, nothing)
-setproperty(data::VsContextData, key::Symbol, value) = getfield(data, :dict)[key] = value
+Base.getproperty(data::VsContextData, key::Symbol) = get(getfield(data, :dict), key, nothing)
+Base.setproperty!(data::VsContextData, key::Symbol, value) = getfield(data, :dict)[key] = value
 
 
 Base.@kwdef struct VsConfig{
@@ -55,7 +56,7 @@ Base.@kwdef mutable struct VsContext{
     current_frame::Union{VsFrame, Nothing} = nothing
     current_scene::Union{AbstractVsScene, Nothing} = nothing
     current_time_skippable::Float64 = 0.0
-    data::Dict{Symbol, Any} = VsContextData()
+    data::VsContextData = VsContextData()
 end
 
 """

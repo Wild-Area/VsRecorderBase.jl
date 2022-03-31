@@ -1,6 +1,7 @@
 module VsRecorderBase
 
 import Dates, TOML, YAML
+using LinearAlgebra
 using FileIO: @format_str
 
 using Reexport: @reexport
@@ -20,16 +21,21 @@ export image, time
 export vs_setup, vs_init!, vs_parse_frame!, vs_update!, vs_result, vs_tryparse_scene
 include("types.jl")
 
+export Missable, Nullable, @missable, @nullable
+include("utils/misc.jl")
+
 export to_gray_image,
-    image_rect,
-    blur, image_distance,
+    blur
+include("utils/image_transform.jl")
+
+export Rect, subimage, topleft
+include("utils/data.jl")
+
+export image_distance, block,
     tempalte_match_all, tempalte_match,
     table_search
-export Missable, Nullable, @missable, @nullable
-include("utils.jl")
-
 export SpriteSheet
-include("data.jl")
+include("utils/template_match.jl")
 
 export open_video, open_camera,
     read_frame, load_image,

@@ -27,6 +27,7 @@ Base.@kwdef struct DefaultStrategy <: AbstractVsStrategy
     match_threshold::Float64 = 0.05
     width::Int64 = 640
     height::Int64 = 360
+    init_descriptors::Bool = false
 end
 
 """
@@ -52,7 +53,7 @@ function _create_descriptors(ctx::VsContext{DefaultStrategy})
     strategy = ctx.config.strategy
     height, width = strategy.height, strategy.width
     use_gray_image = ctx.config.use_gray_image
-    ColorType = use_gray_image ? Gray{N0f8} : RGB{N0f8}
+    ColorType = use_gray_image ? Gray{Float32} : RGB{Float32}
     T = SimpleFeature{ColorType}
     descriptors = OrderedDict{Type, T}()
     for (scene_type, img, mask) in feature_image_and_masks(ctx.config.source, ctx)
@@ -83,7 +84,7 @@ function _get_scene_type(ctx, img)
     img = _normalize(img, use_gray_image, (height, width))
     closest_scene_type, closest_distance = nothing, typemax(Float32)
     for (scene_type, desc) in descriptors
-        distance = _difference(img, desc.image, desc.mask, desc.mask_sum)
+        distance = image_distance(img, desc.image, desc.mask, desc.mask_sum)
         distance < threshold && return scene_type
         if distance < closest_distance
             closest_scene_type = scene_type
@@ -94,8 +95,11 @@ function _get_scene_type(ctx, img)
 end
 
 function vs_init!(ctx::VsContext{DefaultStrategy})
+    strategy = ctx.config.strategy
     data = ctx.data
-    data.scene_descriptors = _create_descriptors(ctx)
+    if strategy.init_descriptors
+        data.scene_descriptors = _create_descriptors(ctx)
+    end
     ctx
 end
 
