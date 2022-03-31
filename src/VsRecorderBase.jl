@@ -1,6 +1,7 @@
 module VsRecorderBase
 
 import Dates, TOML, YAML
+using DataStructures: Queue, enqueue!, dequeue!
 using LinearAlgebra
 using FileIO: @format_str
 
@@ -24,8 +25,8 @@ include("types.jl")
 export Missable, Nullable, @missable, @nullable
 include("utils/misc.jl")
 
-export to_gray_image,
-    blur
+export to_gray_image, blur,
+    color_distance, floodfill, floodfill!
 include("utils/image_transform.jl")
 
 export Rect, subimage, topleft
