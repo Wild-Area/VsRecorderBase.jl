@@ -6,11 +6,11 @@ _open_video(open_func, file; gray) = VsStream(
     end
 )
 
-open_video(file; gray = true) = _open_video(VideoIO.openvideo, file; gray = gray)
+open_video(file; gray = false) = _open_video(VideoIO.openvideo, file; gray = gray)
 
 open_camera(
     device = VideoIO.DEFAULT_CAMERA_DEVICE[];
-    gray = true
+    gray = false
 ) = _open_video(VideoIO.opencamera, device; gray = gray)
 
 read_frame(stream::VsStream) = VsFrame(
@@ -18,7 +18,7 @@ read_frame(stream::VsStream) = VsFrame(
     time = position(stream.video)
 )
 
-function load_image(file; gray = true)
+function load_image(file; gray = false)
     img = load(file)
     if gray
         img = to_gray_image(img)
@@ -26,31 +26,10 @@ function load_image(file; gray = true)
     img
 end
 
-# Serialize & Deserialize YAML for custom types with missable fields
-import YAML: _print
-
 const LITERAL_TYPES = Union{Integer, AbstractFloat, Bool, Dates.DateTime, Dates.Time, Dates.Date, Symbol}
 _to_generator(d::AbstractDict) = (Symbol(key) => value for (key, value) in d)
 
-_print(
-    io::IO,
-    val::LITERAL_TYPES,
-    level::Int=0, ignore_level::Bool=false
-) = _print(io, string(val), level, ignore_level)
-
-_print(io::IO, val::Tuple, level::Int=0, ignore_level::Bool=false) =
-    _print(io, collect(val), level, ignore_level)
-
-function _print(io::IO, val::T, level::Int=0, ignore_level::Bool=false) where T
-    dict = Dict{Symbol, Any}()
-    for key in fieldnames(T)
-        value = getfield(val, key)
-        ismissing(value) && continue
-        dict[key] = value
-    end
-    _print(io, dict, level, ignore_level)
-end
-serialize(object) = YAML.yaml(object)
+serialize(object) = VsYAML.yaml(object)
 
 _parse(val, ::Type{Any}) = val
 _parse(val, ::Type{T}) where T <: LITERAL_TYPES = T(val)

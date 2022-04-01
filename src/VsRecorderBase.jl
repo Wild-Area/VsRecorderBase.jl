@@ -43,6 +43,7 @@ export open_video, open_camera,
     save_config, load_config,
     serialize, deserialize
 include("io.jl")
+include("yaml.jl")
 
 export parse_text
 include("ocr.jl")

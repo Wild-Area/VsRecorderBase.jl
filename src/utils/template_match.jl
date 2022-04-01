@@ -58,20 +58,16 @@ end
         template, table;
         block_size = size(template),
         rect = ((1, 1), block_size),
-        σ = 0.5,
         indices = 1:block_count
     )
 
 Find `template` in `table`. `rect` = (topleft, size) is the region of the block to search.
-
-If `σ ≤ 0`, no blur is applied.
 """
 function table_search(
     template, table;
     block_size = size(template),
     table_size = get_table_size(table, block_size),
     rect = Rect((1, 1), block_size),
-    σ = 0.5,
     indices = nothing,
     mask = nothing
 )
@@ -84,10 +80,6 @@ function table_search(
         template = imresize(template, rect_size)
     end
 
-    if σ > 0
-        template, table = blur(template, σ), blur(table, σ)
-    end
-    
     closest_dist, closest_i = ∞, 0
     for i in indices
         block_img = block(table, i, table_size, block_size)
@@ -116,7 +108,7 @@ struct SpriteSheet{T <: Union{Gray{Float32}, RGB{Float32}}, TM <: Union{Matrix{F
     data::OrderedDict{Int, String}
 end
 
-function SpriteSheet(filename; gray = true)
+function SpriteSheet(filename; gray = false)
     filename, ext = splitext(filename)
     if lowercase(ext) ∉ ("", ".png")
         throw("Should be a png file: $filename")
@@ -164,7 +156,6 @@ block(s::SpriteSheet, i) = block(s.image, i, s.table_size, s.block_size)
 function table_search(
     template, sheet::SpriteSheet;
     rect = Rect((1, 1), sheet.block_size),
-    σ = 0.5,
     indices = keys(sheet.data)
 )
     i = table_search(
@@ -172,7 +163,6 @@ function table_search(
         block_size = sheet.block_size,
         table_size = sheet.table_size,
         rect = rect,
-        σ = σ,
         indices = indices,
         mask = sheet.mask
     )
