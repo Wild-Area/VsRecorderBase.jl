@@ -1,9 +1,9 @@
 module VsRecorderBase
 
 import Dates, TOML, YAML
-using DataStructures: Queue, enqueue!, dequeue!
+using DataStructures: Queue, enqueue!, dequeue!, OrderedDict
 using LinearAlgebra
-using FileIO: @format_str
+using FileIO: Stream, @format_str
 
 using Reexport: @reexport
 

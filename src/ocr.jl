@@ -12,30 +12,27 @@ create_ocr_instance(
 ) = TessInst(language, tess_datapath)
 
 function parse_text(
-    instance,
-    image, 
-    range = size(image);
+    img,
+    instance::TessInst;
     resolution = 72
 )
-    image = @view image[range]
-    pix = get_pix(image)
+    pix = get_pix(img)
     tess_image(instance, pix)
     tess_resolution(instance, resolution)
     text = tess_text(instance)
 end
 
 function parse_text(
-    image, language::AbstractString,
-    range = size(image);
+    img, language::AbstractString;
     tess_datapath = Tesseract.TESS_DATA,
     resolution = 72
 )
     instance = create_ocr_instance(language, tess_datapath = tess_datapath)
-    parse_text(instance, image, range; resolution = resolution)
+    parse_text(img, instance; resolution = resolution)
 end
 
 parse_text(
-    ctx::VsContext, image, 
-    range = size(image);
+    img,
+    ctx::VsContext;
     resolution = 72
-) = parse_text(ctx.ocr_instance, image, range; resolution = resolution)
+) = parse_text(img, ctx.ocr_instance; resolution = resolution)

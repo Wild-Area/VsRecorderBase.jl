@@ -42,4 +42,3 @@ end
 
 floodfill(img, starting_point, color, threshold = 0.1) =
     floodfill!(float(copy(img)), starting_point, color, threshold)
-

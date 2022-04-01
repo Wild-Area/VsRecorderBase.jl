@@ -9,14 +9,12 @@ Rect((top, left), (height, width); resolution = (0, 0)) = Rect(
     top, left, height, width, resolution
 )
 
-struct SubImage{T, TSA <: SubArray{T}}
+struct SubImage{T, TSA <: SubArray{T}} <: AbstractMatrix{T}
     image::TSA
     rect::Rect
 end
-@forward SubImage.image Base.setindex!, Base.getindex, Base.length, Base.size, ImageTransformations.imresize
+@forward SubImage.image Base.setindex!, Base.getindex, Base.length, Base.size
 image(s::SubImage) = s.image
-Base.show(io::IO, mime::MIME"image/png", s::SubImage; kwargs...) = show(io, mime, s.image; kwargs...)
-Base.show(io::IO, m::MIME"text/html", imgs::AbstractArray{<:SubImage}) = show(io, m, [x.image for x in imgs])
 Base.copy(s::SubImage) = copy(s.image)
 
 """

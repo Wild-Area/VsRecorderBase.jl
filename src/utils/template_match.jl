@@ -18,10 +18,6 @@ image_distance(
     weights_sum = sum(weights)
 ) = image_distance(img1, Gray.(img2), weights, weights_sum)
 
-image_distance(img1::SubImage, args...) = image_distance(img1.image, args...)
-image_distance(img1::AbstractMatrix, img2::SubImage, args...) = image_distance(img1, img2.image, args...)
-image_distance(img1::AbstractMatrix, img2::AbstractMatrix, weights::SubImage, args...) =
-    image_distance(img1, img2, weights.image, args...)
 
 function tempalte_match_all(template, img, indices; σ = 0.5)
     if σ > 0
@@ -63,7 +59,7 @@ end
         block_size = size(template),
         rect = ((1, 1), block_size),
         σ = 0.5,
-        range = 1:block_count
+        indices = 1:block_count
     )
 
 Find `template` in `table`. `rect` = (topleft, size) is the region of the block to search.
@@ -76,11 +72,11 @@ function table_search(
     table_size = get_table_size(table, block_size),
     rect = Rect((1, 1), block_size),
     σ = 0.5,
-    range = nothing,
+    indices = nothing,
     mask = nothing
 )
-    if isnothing(range)
-        range = 1:(table_size[1] * table_size[2])
+    if isnothing(indices)
+        indices = 1:(table_size[1] * table_size[2])
     end
 
     rect_size = size(rect)
@@ -93,7 +89,7 @@ function table_search(
     end
     
     closest_dist, closest_i = ∞, 0
-    for i in range
+    for i in indices
         block_img = block(table, i, table_size, block_size)
         subsection = subimage(block_img, rect)
         dist = if isnothing(mask)
@@ -117,7 +113,7 @@ struct SpriteSheet{T <: Union{Gray{Float32}, RGB{Float32}}, TM <: Union{Matrix{F
     block_size::Tuple{Int, Int}
     # (nrows, ncols)
     table_size::Tuple{Int, Int}
-    data::Vector{String}
+    data::OrderedDict{Int, String}
 end
 
 function SpriteSheet(filename; gray = true)
@@ -131,12 +127,20 @@ function SpriteSheet(filename; gray = true)
     catch
         nothing
     end
-    data, block_size = open("$filename.yaml") do fi
+    raw_data, block_size, indices = open("$filename.yaml") do fi
         data = YAML.load(fi)
-        data["data"], data["block-size"]
+        data["data"], data["block-size"], get(data, "indices", nothing)
     end
     block_size = (block_size[1], block_size[2])
     table_size = get_table_size(img, block_size)
+    data = OrderedDict{Int, String}()
+    if isnothing(indices)
+        indices = 1:length(raw_data)
+    end
+    @assert length(indices) ≡ length(raw_data)
+    for (i, s) in zip(indices, raw_data)
+        data[i] = string(s)
+    end
     SpriteSheet(float(img), mask, block_size, table_size, data)
 end
 
@@ -156,11 +160,12 @@ block(img::AbstractMatrix, i, table_size, block_size) = let (_, ncols) = table_s
 end
 block(s::SpriteSheet, i) = block(s.image, i, s.table_size, s.block_size)
 
+
 function table_search(
     template, sheet::SpriteSheet;
     rect = Rect((1, 1), sheet.block_size),
     σ = 0.5,
-    range = 1:length(sheet)
+    indices = keys(sheet.data)
 )
     i = table_search(
         template, sheet.image,
@@ -168,7 +173,7 @@ function table_search(
         table_size = sheet.table_size,
         rect = rect,
         σ = σ,
-        range = range,
+        indices = indices,
         mask = sheet.mask
     )
     sheet[i]

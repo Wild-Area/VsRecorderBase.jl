@@ -102,6 +102,7 @@ vs_result(::T) where T <: VsContext = error("Not implemented: vs_result($T)")
 vs_tryparse_scene(
     ::Type{<:AbstractVsScene},
     ::VsFrame,
-    ::VsContext
+    ::Union{VsContext, Nothing} = nothing;
+    force = false
 ) = nothing
 
