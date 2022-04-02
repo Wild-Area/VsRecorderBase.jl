@@ -62,6 +62,7 @@ end
 
 Base.getindex(img::AbstractMatrix, rect::Rect) = subimage(img, rect)
 Base.getindex(img::SubImage, rect::Rect) = subimage(img, rect)
+Base.getindex(img::VsFrame, rect::Rect) = subimage(img, rect)
 Base.size(rect::Rect) = (rect.height, rect.width)
 topleft(rect::Rect) = (rect.top, rect.left)
 

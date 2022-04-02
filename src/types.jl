@@ -16,13 +16,13 @@ end
     VideoIO.skipframe, VideoIO.skipframes, VideoIO.framerate
 
 """Frame."""
-Base.@kwdef struct VsFrame{T <: AbstractMatrix}
-    image::T
+Base.@kwdef struct VsFrame{T, TM <: AbstractMatrix{T}} <: AbstractMatrix{T}
+    image::TM
     time::Rational{Int64} = 0 // 1
 end
 image(frame::VsFrame) = frame.image
 time(frame::VsFrame) = frame.time
-Base.show(io::IO, mime::MIME"image/png", s::VsFrame; kwargs...) = show(io, mime, s.image; kwargs...)
+@forward VsFrame.image Base.length, Base.size, Base.getindex, Base.setindex!
 
 Base.@kwdef struct VsContextData
     dict::Dict{Symbol, Any} = Dict()
@@ -53,6 +53,7 @@ Base.@kwdef mutable struct VsContext{
     config::VsConfig{TStrategy, TSource}
     stream::TStream
     ocr_instance::TessInst
+    ocr_instance_eng::TessInst
     current_frame::Union{VsFrame, Nothing} = nothing
     current_scene::Union{AbstractVsScene, Nothing} = nothing
     current_time_skippable::Float64 = 0.0

@@ -1,9 +1,11 @@
 function initialize(config::VsConfig, stream::Union{AbstractVsStream, Nothing} = nothing)
     ocr_instance = create_ocr_instance(config.ocr_language)
+    ocr_instance_eng = create_ocr_instance("eng")
     ctx = VsContext(
         config = config,
         stream = stream,
-        ocr_instance = ocr_instance
+        ocr_instance = ocr_instance,
+        ocr_instance_eng = ocr_instance_eng
     )
     vs_init!(ctx)
     ctx
