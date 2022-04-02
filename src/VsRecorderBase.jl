@@ -26,10 +26,13 @@ export Missable, Nullable, @missable, @nullable
 include("utils/misc.jl")
 
 export to_gray_image, blur,
-    color_distance, floodfill, floodfill!
+    color_distance, floodfill, floodfill!,
+    draw_outline, draw_outline!,
+    cycled_translate,
+    blend_color
 include("utils/image_transform.jl")
 
-export Rect, subimage, topleft
+export Rect, subimage, topleft, is_gray
 include("utils/data.jl")
 
 export image_distance, block,

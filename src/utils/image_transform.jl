@@ -1,8 +1,7 @@
 to_gray_image(img::AbstractMatrix{<:Gray}) = img
 to_gray_image(img::AbstractMatrix) = Gray.(img)
 
-blur(img::AbstractMatrix, σ = 0.5) = imfilter(img, KernelFactors.gaussian((σ, σ)))
-blur(img, σ = 0.5) = blur(image(img), σ)
+blur(img::AbstractMatrix, σ = 0.5f0) = imfilter(img, KernelFactors.gaussian((σ, σ)))
 
 color_distance(a::Gray, b::Gray) = Float32(a - b)
 color_distance(a::RGB, b::RGB) = norm.(a - b)
@@ -42,3 +41,60 @@ end
 
 floodfill(img, starting_point, color, threshold = 0.1) =
     floodfill!(float(copy(img)), starting_point, color, threshold)
+
+function draw_outline!(img::AbstractMatrix, color = 0, width::Int = 1, threshold = 0.05)
+    color = RGB(color)
+    width < 1 && return img
+    h, w = size(img)
+    bg_color = img[1, 1]
+    if color_distance(color, bg_color) < threshold
+        return img
+    end
+    is_bg_color = map(img) do x
+        color_distance(x, bg_color) < threshold
+    end 
+    d = width
+    @inbounds for x in 1:w
+        for y in 1:h
+            !is_bg_color[y, x] && continue
+            for dx in -d:d, dy in -d:d
+                uy, ux = y + dy, x + dx
+                if 0 < uy && uy ≤ h && 0 < ux && ux ≤ w && !is_bg_color[uy, ux]
+                    img[y, x] = color
+                end
+            end
+        end
+    end
+    img
+end
+draw_outline(img, color=0, width=1) = draw_outline!(copy(img), color, width)
+
+function cycled_translate(img::AbstractMatrix, (dy, dx))
+    h, w = size(img)
+    dy, dx = dy % h, dx % w
+    if dy < 0
+        dy += h
+    end
+    if dx < 0
+        dx += w
+    end
+    img2 = similar(img)
+    @inbounds begin
+        img2[1:dy, 1:dx] = @view img[h - dy + 1:h, w - dx + 1:w]
+        img2[1 + dy:h, 1 + dx:w] = @view img[1:h - dy, 1:w - dx]
+        img2[1:dy, 1 + dx:w] = @view img[h - dy + 1:h, 1:w - dx]
+        img2[1 + dy:h, 1:dx] = @view img[1:h - dy, w - dx + 1:w]
+    end
+    img2
+end
+
+function blend_color(blend::AbstractMatrix, base::AbstractMatrix)
+    base = HSL.(base)
+    blend = HSL.(blend)
+    new_img = similar(base)
+    chs = channelview(new_img)
+    ax = axes(base)    
+    chs[3, ax...] = channelview(base)[3, ax...]
+    chs[1:2, ax...] = channelview(blend)[1:2, ax...]
+    RGB.(new_img)
+end

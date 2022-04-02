@@ -30,7 +30,7 @@ function tempalte_match_all(template, img, indices; σ = 0.5)
 end
 
 """
-    tempalte_match(template, image, indices; σ = 0.5)
+    tempalte_match(template, image, indices; σ = 0.5f0)
 
 Match `template` in `image`. `indices` are the points of the centers of windows in the image.
 
@@ -38,7 +38,7 @@ If `σ ≤ 0`, no blur is applied.
 """
 function tempalte_match(
     template, img, indices = axes(img);
-    σ = 0.5
+    σ = 0.5f0
 )
     perms, dists = tempalte_match_all(template, img, indices; σ = σ)
     perms[1], dists[1]
@@ -106,6 +106,7 @@ struct SpriteSheet{T <: Union{Gray{Float32}, RGB{Float32}}, TM <: Union{Matrix{F
     # (nrows, ncols)
     table_size::Tuple{Int, Int}
     data::OrderedDict{Int, String}
+    filename::String
 end
 
 function SpriteSheet(filename; gray = false)
@@ -133,7 +134,7 @@ function SpriteSheet(filename; gray = false)
     for (i, s) in zip(indices, raw_data)
         data[i] = string(s)
     end
-    SpriteSheet(float(img), mask, block_size, table_size, data)
+    SpriteSheet(float(img), mask, block_size, table_size, data, filename)
 end
 
 @forward SpriteSheet.data Base.length, Base.getindex
