@@ -27,12 +27,35 @@ function load_image(file; gray = false)
 end
 
 const LITERAL_TYPES = Union{Integer, AbstractFloat, Bool, Dates.DateTime, Dates.Time, Dates.Date, Symbol}
+abstract type SimpleTypeWrapper{T} end
+macro type_wrapper(name, T, default=nothing)
+    name = esc(name)
+    T = esc(T)
+    default = esc(default)
+    default_constructor = if !isnothing(default)
+        :($name() = $name($default))
+    end
+    quote
+        struct $name <: SimpleTypeWrapper{$T}
+            value::$T
+        end
+        $default_constructor
+        Base.convert(::Type{$name}, x::$name) = x
+        Base.convert(::Type{$name}, x) = $name(convert($T, x))
+        Base.convert(::Type{$T}, x::$name) = x.value
+        Base.show(io::IO, x::$name) = show(io, x.value)
+        @forward $name.value Base.getindex, Base.setindex!
+    end
+end
+
 _to_generator(d::AbstractDict) = (Symbol(key) => value for (key, value) in d)
 
 serialize(object) = VsYAML.yaml(object)
 
 _parse(val, ::Type{Any}) = val
 _parse(val, ::Type{T}) where T <: LITERAL_TYPES = T(val)
+_parse(val, ::Type{TS}) where {T, TS <: SimpleTypeWrapper{T}} =
+    TS(_parse(val, T))
 _parse(int::Integer, ::Type{T}) where T <: Enum = T(int)
 function _parse(s, ::Type{T}) where T <: Enum
     values = instances(T)

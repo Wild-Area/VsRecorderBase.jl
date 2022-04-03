@@ -29,6 +29,7 @@ Base.@kwdef struct VsContextData
 end
 Base.getproperty(data::VsContextData, key::Symbol) = get(getfield(data, :dict), key, nothing)
 Base.setproperty!(data::VsContextData, key::Symbol, value) = getfield(data, :dict)[key] = value
+Base.propertynames(data::VsContextData) = keys(getfield(data, :dict))
 
 
 Base.@kwdef struct VsConfig{
@@ -104,6 +105,6 @@ vs_tryparse_scene(
     ::Type{<:AbstractVsScene},
     ::VsFrame,
     ::Union{VsContext, Nothing} = nothing;
-    force = false
+    force::Bool = false
 ) = nothing
 

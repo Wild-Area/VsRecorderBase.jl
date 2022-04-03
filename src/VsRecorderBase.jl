@@ -43,6 +43,7 @@ include("utils/template_match.jl")
 
 export open_video, open_camera,
     read_frame, load_image,
+    @type_wrapper,
     save_config, load_config,
     serialize, deserialize
 include("io.jl")

@@ -2,7 +2,7 @@
 # From https://github.com/JuliaData/YAML.jl/blob/master/src/writer.jl
 module VsYAML
 
-using ..VsRecorderBase: LITERAL_TYPES
+using ..VsRecorderBase: LITERAL_TYPES, SimpleTypeWrapper
 
 # recursively print a dictionary
 _print(io::IO, dict::AbstractDict, level::Int=0, ignore_level::Bool=false) =
@@ -93,6 +93,9 @@ _print(
 
 _print(io::IO, val::Tuple, level::Int=0, ignore_level::Bool=false) =
     _print(io, collect(val), level, ignore_level)
+
+_print(io::IO, val::SimpleTypeWrapper, level::Int=0, ignore_level::Bool=false) =
+    _print(io, val.value, level, ignore_level)
 
 function _print(io::IO, val::T, level::Int=0, ignore_level::Bool=false) where T
     dict = Dict{Symbol, Any}()
