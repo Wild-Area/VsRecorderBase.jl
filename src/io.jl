@@ -49,31 +49,50 @@ macro type_wrapper(name, T, default=nothing)
 end
 
 _to_generator(d::AbstractDict) = (Symbol(key) => value for (key, value) in d)
+function to_snake_case(s::AbstractString)
+    s = replace(s, r"([a-z])([A-Z])" => s"\1_\2", '-' => '_')
+    lowercase(s)
+end
 
 serialize(object) = VsYAML.yaml(object)
 
-_parse(val, ::Type{Any}) = val
-_parse(val, ::Type{T}) where T <: LITERAL_TYPES = T(val)
-_parse(val, ::Type{TS}) where {T, TS <: SimpleTypeWrapper{T}} =
+_parse(val, ::Type{Any}; kwargs...) = val
+_parse(val, T::Type; kwargs...) = convert(T, val)
+_parse(val, ::Type{TS}; kwargs...) where {T, TS <: SimpleTypeWrapper{T}} =
     TS(_parse(val, T))
-_parse(int::Integer, ::Type{T}) where T <: Enum = T(int)
-function _parse(s, ::Type{T}) where T <: Enum
+_parse(int::Integer, ::Type{T}; kwargs...) where T <: Enum = T(int)
+function _parse(s, ::Type{T}; kwargs...) where T <: Enum
     values = instances(T)
     s = lowercase(string(s))
     values[findfirst(values) do x
         lowercase(string(x)) == s
     end]
 end
-_parse(arr::AbstractArray, ::Type{<:AbstractArray{T}}) where T = [_parse(x, TE) for x in arr]
-_parse(arr::AbstractArray, ::Type{T}) where T <: Tuple = tuple(_parse(x, eltype(TE)) for (x, TE) in zip(arr, T.types))
-_parse(dict::AbstractDict, T::Type{<:AbstractDict{TKey, TValue}}) where {TKey, TValue} = T(
+_parse(arr::AbstractArray, ::Type{<:AbstractArray{T}}; kwargs...) where T = [_parse(x, T) for x in arr]
+_parse(arr::AbstractArray, ::Type{T}; kwargs...) where T <: Tuple =
+    tuple(_parse(x, eltype(TE)) for (x, TE) in zip(arr, T.types))
+_parse(dict::AbstractDict, T::Type{<:AbstractDict{TKey, TValue}}; kwargs...) where {TKey, TValue} = T(
     _parse(key, TKey) => _parse(value, TValue)
     for (key, value) in dict
 )
-function _parse(dict::AbstractDict, T::Type)
+function _parse(dict::AbstractDict, T::Type; other_key = nothing)
     params = Dict{Symbol, Any}()
-    for key in fieldnames(T)
-        params[key] = dict[string(key)]
+    if !isnothing(other_key)
+        other_key = Symbol(other_key)
+        params[other_key] = Dict{Symbol, Any}()
+    end
+    fnames = fieldnames(T)
+    for (key, value) in dict
+        skey = to_snake_case(string(key))
+        skey = Symbol(skey)
+        if skey ∉ fnames
+            if !isnothing(other_key)
+                params[other_key][skey] = value
+            end
+            continue
+        end
+        TF = fieldtype(T, skey)
+        params[skey] = _parse(value, TF)
     end
     T(; _to_generator(params)...)
 end
@@ -83,9 +102,9 @@ end
 
 Note that `T` must be a type that can be constructed by keywords, e.g., defined by `Base.@kwdef`
 """
-function deserialize(yaml, T::Type)
-    dict = YAML.load(yaml)
-    _parse(dict, T)
+function deserialize(yaml, T::Type; other_key = nothing, kwargs...)
+    dict = YAML.load(yaml; kwargs...)
+    _parse(dict, T; other_key = other_key)
 end
 
 _to_toml(x::LITERAL_TYPES) = x
