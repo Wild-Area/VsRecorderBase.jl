@@ -27,24 +27,15 @@ function load_image(file; gray = false)
 end
 
 const LITERAL_TYPES = Union{Integer, AbstractFloat, Bool, Dates.DateTime, Dates.Time, Dates.Date, Symbol}
-abstract type SimpleTypeWrapper{T} end
-macro type_wrapper(name, T, default=nothing)
-    name = esc(name)
-    T = esc(T)
-    default = esc(default)
-    default_constructor = if !isnothing(default)
-        :($name() = $name($default))
-    end
-    quote
-        struct $name <: SimpleTypeWrapper{$T}
-            value::$T
-        end
-        $default_constructor
-        Base.convert(::Type{$name}, x::$name) = x
-        Base.convert(::Type{$name}, x) = $name(convert($T, x))
-        Base.convert(::Type{$T}, x::$name) = x.value
-        Base.show(io::IO, x::$name) = show(io, x.value)
-        @forward $name.value Base.getindex, Base.setindex!
+
+enum_prefix(::Type{T}) where T <: Enum = ""
+function _rm_enum_prefix(x::T) where T <: Enum
+    prefix = enum_prefix(T)
+    s = string(x)
+    if prefix == ""
+        s
+    else
+        split(s, prefix, limit = 2)[2]
     end
 end
 
@@ -59,29 +50,39 @@ serialize(object) = VsYAML.yaml(object)
 _parse(val, ::Type{Any}; kwargs...) = val
 _parse(val, T::Type; kwargs...) = convert(T, val)
 _parse(val, ::Type{TS}; kwargs...) where {T, TS <: SimpleTypeWrapper{T}} =
-    TS(_parse(val, T))
+    TS(_parse(val, T; kwargs...))
 _parse(int::Integer, ::Type{T}; kwargs...) where T <: Enum = T(int)
 function _parse(s, ::Type{T}; kwargs...) where T <: Enum
     values = instances(T)
-    s = lowercase(string(s))
-    values[findfirst(values) do x
-        lowercase(string(x)) == s
-    end]
+    s = lowercase(enum_prefix(T)) * to_snake_case(string(s))
+    try
+        values[findfirst(values) do x
+            lowercase(string(x)) == s
+        end]
+    catch e
+        @show s
+        @show s
+        @show values
+        rethrow(e)
+    end
 end
-_parse(arr::AbstractArray, ::Type{<:AbstractArray{T}}; kwargs...) where T = [_parse(x, T) for x ∈ arr]
+_parse(arr::AbstractArray, ::Type{<:AbstractArray{T}}; kwargs...) where T = [_parse(x, T; kwargs...) for x ∈ arr]
 _parse(arr::AbstractArray, ::Type{T}; kwargs...) where T <: Tuple =
-    tuple(_parse(x, eltype(TE)) for (x, TE) in zip(arr, T.types))
+    tuple(_parse(x, eltype(TE); kwargs...) for (x, TE) in zip(arr, T.types))
 _parse(dict::AbstractDict, T::Type{<:AbstractDict{TKey, TValue}}; kwargs...) where {TKey, TValue} = T(
-    _parse(key, TKey) => _parse(value, TValue)
+    _parse(key, TKey; kwargs...) => _parse(value, TValue; kwargs...)
     for (key, value) in dict
 )
 function _parse(dict::AbstractDict, T::Type; other_key = nothing)
     params = Dict{Symbol, Any}()
-    if !isnothing(other_key)
-        other_key = Symbol(other_key)
-        params[other_key] = Dict{Symbol, Any}()
-    end
     fnames = fieldnames(T)
+    other_key = if !isnothing(other_key)
+        other_key = Symbol(other_key)
+        if other_key ∈ fnames
+            params[other_key] = Dict{Symbol, Any}()
+            other_key
+        end
+    end
     for (key, value) in dict
         skey = to_snake_case(string(key))
         skey = Symbol(skey)
@@ -92,7 +93,7 @@ function _parse(dict::AbstractDict, T::Type; other_key = nothing)
             continue
         end
         TF = fieldtype(T, skey)
-        params[skey] = _parse(value, TF)
+        params[skey] = _parse(value, TF; other_key = other_key)
     end
     T(; _to_generator(params)...)
 end
@@ -108,7 +109,8 @@ function deserialize(yaml, T::Type; other_key = nothing, kwargs...)
 end
 
 _to_toml(x::LITERAL_TYPES) = x
-_to_toml(x::Enum) = string(x)
+_to_toml(x::Enum) = _rm_enum_prefix(x)
+
 _to_toml(dict::AbstractDict) = Dict(
     key => _to_toml(value)
     for (key, value) in dict

@@ -39,3 +39,25 @@ end
 macro nullable(expr)
     _make_nullable(expr, Nullable, nothing)
 end
+
+abstract type SimpleTypeWrapper{T} end
+macro type_wrapper(name, T, default=nothing)
+    name = esc(name)
+    T = esc(T)
+    default = esc(default)
+    default_constructor = if !isnothing(default)
+        :($name() = $name($default))
+    end
+    quote
+        struct $name <: SimpleTypeWrapper{$T}
+            value::$T
+        end
+        $default_constructor
+        Base.convert(::Type{$name}, x::$name) = x
+        Base.convert(::Type{$name}, x) = $name(convert($T, x))
+        Base.convert(::Type{$T}, x::$name) = x.value
+        Base.print(io::IO, x::$name) = print(io, x.value)
+        Base.getindex(x::$name) = x.value
+        @forward $name.value Base.getindex, Base.setindex!
+    end
+end
