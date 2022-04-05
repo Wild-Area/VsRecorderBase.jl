@@ -68,7 +68,7 @@ function _parse(s, ::Type{T}; kwargs...) where T <: Enum
         lowercase(string(x)) == s
     end]
 end
-_parse(arr::AbstractArray, ::Type{<:AbstractArray{T}}; kwargs...) where T = [_parse(x, T) for x in arr]
+_parse(arr::AbstractArray, ::Type{<:AbstractArray{T}}; kwargs...) where T = [_parse(x, T) for x ∈ arr]
 _parse(arr::AbstractArray, ::Type{T}; kwargs...) where T <: Tuple =
     tuple(_parse(x, eltype(TE)) for (x, TE) in zip(arr, T.types))
 _parse(dict::AbstractDict, T::Type{<:AbstractDict{TKey, TValue}}; kwargs...) where {TKey, TValue} = T(
@@ -115,7 +115,7 @@ _to_toml(dict::AbstractDict) = Dict(
 )
 _to_toml(data) = Dict(
     string(key) => _to_toml(getfield(data, key))
-    for key in fieldnames(typeof(data))
+    for key ∈ fieldnames(typeof(data))
 )
 _to_toml(params::Union{AbstractVsSource, AbstractVsStrategy}) = Dict(
     "type": typeof(source).name.name,

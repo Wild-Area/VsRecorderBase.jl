@@ -1,3 +1,8 @@
+const OCR_DATA_DIR = abspath(joinpath(pathof(@__MODULE__), "../../tessdata"))
+
+download_ocr_language(lang, target = OCR_DATA_DIR) =
+    Tesseract.download_languages(lang, target = target)
+
 function get_pix(img::AbstractMatrix)
     f = IOBuffer()
     s = Stream{format"PNG"}(f)
@@ -8,7 +13,7 @@ end
 
 create_ocr_instance(
     language::AbstractString;
-    tess_datapath = Tesseract.TESS_DATA,
+    tess_datapath = OCR_DATA_DIR
 ) = TessInst(language, tess_datapath)
 
 
@@ -37,7 +42,7 @@ end
 function ocr(
     ::Type{String},
     img::AbstractMatrix, language::AbstractString;
-    tess_datapath = Tesseract.TESS_DATA,
+    tess_datapath = OCR_DATA_DIR,
     kwargs...
 )
     instance = create_ocr_instance(language, tess_datapath = tess_datapath)

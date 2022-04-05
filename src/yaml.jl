@@ -19,7 +19,7 @@ _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=false) =
     if isempty(arr)
         println(io, "[]")
     else
-        for elem in arr
+        for elem ∈ arr
             if elem isa AbstractVector # vectors of vectors must be handled differently
                 print(io, _indent("-\n", level))
                 _print(io, elem, level + 1)
@@ -58,7 +58,7 @@ _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=false) =
             println(io, "|-")
         end
         indent = repeat("  ", max(level, 1))
-        for line in split(str, "\n")
+        for line ∈ split(str, "\n")
             println(io, indent, line)
         end
     else
@@ -99,7 +99,7 @@ _print(io::IO, val::SimpleTypeWrapper, level::Int=0, ignore_level::Bool=false) =
 
 function _print(io::IO, val::T, level::Int=0, ignore_level::Bool=false) where T
     dict = Dict{Symbol, Any}()
-    for key in fieldnames(T)
+    for key ∈ fieldnames(T)
         value = getfield(val, key)
         ismissing(value) && continue
         dict[key] = value

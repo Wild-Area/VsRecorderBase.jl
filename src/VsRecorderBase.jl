@@ -49,7 +49,8 @@ export open_video, open_camera,
 include("io.jl")
 include("yaml.jl")
 
-export create_ocr_instance, ocr
+export create_ocr_instance, ocr,
+    download_ocr_language
 include("ocr.jl")
 
 export DefaultStrategy

@@ -54,10 +54,10 @@ function draw_outline!(img::AbstractMatrix, color = 0, width::Int = 1, threshold
         color_distance(x, bg_color) < threshold
     end 
     d = width
-    @inbounds for x in 1:w
-        for y in 1:h
+    @inbounds for x ∈ 1:w
+        for y ∈ 1:h
             !is_bg_color[y, x] && continue
-            for dx in -d:d, dy in -d:d
+            for dx ∈ -d:d, dy in -d:d
                 uy, ux = y + dy, x + dx
                 if 0 < uy && uy ≤ h && 0 < ux && ux ≤ w && !is_bg_color[uy, ux]
                     img[y, x] = color

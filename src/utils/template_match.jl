@@ -19,7 +19,7 @@ image_distance(
 ) = image_distance(img1, Gray.(img2), weights, weights_sum)
 
 
-function tempalte_match_all(template, img, indices; σ = 0.5)
+function tempalte_match_all(template, img, indices; σ = 0.5f0)
     if σ > 0
         template, img = blur(template, σ), blur(img, σ)
     end
@@ -81,7 +81,7 @@ function table_search(
     end
 
     closest_dist, closest_i = ∞, 0
-    for i in indices
+    for i ∈ indices
         block_img = block(table, i, table_size, block_size)
         subsection = subimage(block_img, rect)
         dist = if isnothing(mask)
