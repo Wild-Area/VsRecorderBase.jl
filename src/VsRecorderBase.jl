@@ -60,4 +60,9 @@ using .DefaultStrategyModule: DefaultStrategy
 include("main.jl")
 include("api.jl")
 
+function __init__()
+    mkpath(OCR_DATA_DIR)
+    nothing
+end
+
 end
