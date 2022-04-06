@@ -6,7 +6,7 @@ const Nullable{T} = Union{Nothing, T}
 function _make_nullable(expr, T, default)
     @assert expr.head ≡ :struct
     fields = expr.args[3].args
-    for i ∈ 1:length(fields)
+    for i in 1:length(fields)
         field = fields[i]
         field isa Expr || continue
         if field.head ≡ :(::)

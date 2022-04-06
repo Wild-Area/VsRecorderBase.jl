@@ -81,7 +81,7 @@ function table_search(
     end
 
     closest_dist, closest_i = ∞, 0
-    for i ∈ indices
+    for i in indices
         block_img = block(table, i, table_size, block_size)
         subsection = subimage(block_img, rect)
         dist = if isnothing(mask)

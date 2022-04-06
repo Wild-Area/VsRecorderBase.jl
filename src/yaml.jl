@@ -2,7 +2,7 @@
 # From https://github.com/JuliaData/YAML.jl/blob/master/src/writer.jl
 module VsYAML
 
-using ..VsRecorderBase: LITERAL_TYPES, SimpleTypeWrapper, _rm_enum_prefix
+using ..VsRecorderBase: LITERAL_TYPES, SimpleTypeWrapper, OrderedDict, _rm_enum_prefix
 
 # recursively print a dictionary
 _print(io::IO, dict::AbstractDict, level::Int=0, ignore_level::Bool=false) =
@@ -19,7 +19,7 @@ _print(io::IO, arr::AbstractVector, level::Int=0, ignore_level::Bool=false) =
     if isempty(arr)
         println(io, "[]")
     else
-        for elem ∈ arr
+        for elem in arr
             if elem isa AbstractVector # vectors of vectors must be handled differently
                 print(io, _indent("-\n", level))
                 _print(io, elem, level + 1)
@@ -38,12 +38,15 @@ function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
         string(pair[1]) # any useful case
     end
     print(io, _indent(key * ":", level, ignore_level)) # print the key
-    if (pair[2] isa AbstractDict || pair[2] isa AbstractVector) && !isempty(pair[2])
-        print(io, "\n") # a line break is needed before a recursive structure
-    else
+    value = pair[2]
+    if value isa AbstractDict || value isa AbstractVector
+        print(io, isempty(value) ? " " : "\n") # a line break is needed before a recursive structure
+    elseif value isa LITERAL_TYPES || value isa Enum || value isa SimpleTypeWrapper || value isa AbstractString
         print(io, " ") # a whitespace character is needed before a single value
+    else
+        print(io, "\n")
     end
-    _print(io, pair[2], level + 1) # print the value
+    _print(io, value, level + 1) # print the value
 end
 
 # _print a single string
@@ -58,7 +61,7 @@ _print(io::IO, str::AbstractString, level::Int=0, ignore_level::Bool=false) =
             println(io, "|-")
         end
         indent = repeat("  ", max(level, 1))
-        for line ∈ split(str, "\n")
+        for line in split(str, "\n")
             println(io, indent, line)
         end
     else
@@ -89,7 +92,7 @@ _print(
     io::IO,
     val::LITERAL_TYPES,
     level::Int=0, ignore_level::Bool=false
-) = _print(io, string(val), level, ignore_level)
+) = println(io, val)
 
 _print(
     io::IO,
@@ -104,8 +107,8 @@ _print(io::IO, val::SimpleTypeWrapper, level::Int=0, ignore_level::Bool=false) =
     _print(io, val.value, level, ignore_level)
 
 function _print(io::IO, val::T, level::Int=0, ignore_level::Bool=false) where T
-    dict = Dict{Symbol, Any}()
-    for key ∈ fieldnames(T)
+    dict = OrderedDict{Symbol, Any}()
+    for key in fieldnames(T)
         value = getfield(val, key)
         ismissing(value) && continue
         dict[key] = value

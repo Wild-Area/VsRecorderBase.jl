@@ -41,7 +41,11 @@ end
 
 _to_generator(d::AbstractDict) = (Symbol(key) => value for (key, value) in d)
 function to_snake_case(s::AbstractString)
-    s = replace(s, r"([a-z])([A-Z])" => s"\1_\2", '-' => '_')
+    s = replace(s, r"\W+" => '_', r"([a-z])([A-Z])" => s"\1_\2", '-' => '_')
+    lowercase(s)
+end
+function to_kebab_case(s::AbstractString)
+    s = replace(s, r"\W+" => '-', r"([a-z])([A-Z])" => s"\1-\2", '_' => '-')
     lowercase(s)
 end
 
@@ -55,24 +59,19 @@ _parse(int::Integer, ::Type{T}; kwargs...) where T <: Enum = T(int)
 function _parse(s, ::Type{T}; kwargs...) where T <: Enum
     values = instances(T)
     s = lowercase(enum_prefix(T)) * to_snake_case(string(s))
-    try
-        values[findfirst(values) do x
-            lowercase(string(x)) == s
-        end]
-    catch e
-        @show s
-        @show s
-        @show values
-        rethrow(e)
-    end
+    values[findfirst(values) do x
+        lowercase(string(x)) == s
+    end]
 end
-_parse(arr::AbstractArray, ::Type{<:AbstractArray{T}}; kwargs...) where T = [_parse(x, T; kwargs...) for x ∈ arr]
+_parse(arr::AbstractArray, ::Type{<:AbstractArray{T}}; kwargs...) where T = [_parse(x, T; kwargs...) for x in arr]
 _parse(arr::AbstractArray, ::Type{T}; kwargs...) where T <: Tuple =
     tuple(_parse(x, eltype(TE); kwargs...) for (x, TE) in zip(arr, T.types))
 _parse(dict::AbstractDict, T::Type{<:AbstractDict{TKey, TValue}}; kwargs...) where {TKey, TValue} = T(
     _parse(key, TKey; kwargs...) => _parse(value, TValue; kwargs...)
     for (key, value) in dict
 )
+_parse(dict::AbstractDict, ::Type{Nullable{T}}; kwargs...) where T = _parse(dict, T; kwargs...)
+_parse(dict::AbstractDict, ::Type{Missable{T}}; kwargs...) where T = _parse(dict, T; kwargs...)
 function _parse(dict::AbstractDict, T::Type; other_key = nothing)
     params = Dict{Symbol, Any}()
     fnames = fieldnames(T)
@@ -117,7 +116,7 @@ _to_toml(dict::AbstractDict) = Dict(
 )
 _to_toml(data) = Dict(
     string(key) => _to_toml(getfield(data, key))
-    for key ∈ fieldnames(typeof(data))
+    for key in fieldnames(typeof(data))
 )
 _to_toml(params::Union{AbstractVsSource, AbstractVsStrategy}) = Dict(
     "type": typeof(source).name.name,
