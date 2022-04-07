@@ -52,7 +52,7 @@ function draw_outline!(img::AbstractMatrix, color = 0, width::Int = 1, threshold
     end
     is_bg_color = map(img) do x
         color_distance(x, bg_color) < threshold
-    end 
+    end
     d = width
     @inbounds for x in 1:w
         for y in 1:h
@@ -93,8 +93,17 @@ function blend_color(blend::AbstractMatrix, base::AbstractMatrix)
     blend = HSL.(blend)
     new_img = similar(base)
     chs = channelview(new_img)
-    ax = axes(base)    
+    ax = axes(base)
     chs[3, ax...] = channelview(base)[3, ax...]
     chs[1:2, ax...] = channelview(blend)[1:2, ax...]
     RGB.(new_img)
+end
+
+function prepare_text_for_ocr(img::AbstractMatrix, threshold = 0.35f0, white_text = true)
+    img = Gray.(img)
+    if white_text
+        img = complement.(img)
+    end
+    img[img .> threshold] .= 1
+    img
 end

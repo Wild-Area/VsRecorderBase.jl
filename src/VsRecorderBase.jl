@@ -31,7 +31,8 @@ export to_gray_image, blur,
     color_distance, floodfill, floodfill!,
     draw_outline, draw_outline!,
     cycled_translate,
-    blend_color
+    blend_color,
+    prepare_text_for_ocr
 include("utils/image_transform.jl")
 
 export Rect, subimage, topleft, is_gray
