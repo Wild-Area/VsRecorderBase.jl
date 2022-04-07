@@ -23,7 +23,8 @@ export vs_setup, vs_init!, vs_parse_frame!, vs_update!, vs_result, vs_tryparse_s
 include("types.jl")
 
 export Missable, Nullable,
-    @missable, @nullable, @type_wrapper
+    @missable, @nullable,
+    SimpleTypeWrapper, @type_wrapper
 include("utils/misc.jl")
 
 export to_gray_image, blur,
@@ -44,7 +45,6 @@ include("utils/template_match.jl")
 
 export open_video, open_camera,
     read_frame, load_image,
-    save_config, load_config,
     serialize, deserialize
 include("io.jl")
 include("yaml.jl")

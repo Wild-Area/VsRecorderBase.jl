@@ -40,6 +40,7 @@ struct SimpleFeature{T <: Union{Gray{Float32}, RGB{Float32}}}
 end
 
 feature_image_and_masks(::T, ::VsContext) where T <: AbstractVsSource = error("Unsupported source: $T")
+should_check(::Type{<:AbstractVsScene}, ::VsContext) = true
 
 function _normalize(img, use_gray_image, size)
     if use_gray_image
@@ -84,6 +85,7 @@ function _get_scene_type(ctx, img)
     img = _normalize(img, use_gray_image, (height, width))
     closest_scene_type, closest_distance = nothing, typemax(Float32)
     for (scene_type, desc) in descriptors
+        should_check(scene_type, ctx) || continue
         distance = image_distance(img, desc.image, desc.mask, desc.mask_sum)
         distance < threshold && return scene_type
         if distance < closest_distance

@@ -72,7 +72,7 @@ _parse(dict::AbstractDict, T::Type{<:AbstractDict{TKey, TValue}}; kwargs...) whe
 )
 _parse(dict::AbstractDict, ::Type{Nullable{T}}; kwargs...) where T = _parse(dict, T; kwargs...)
 _parse(dict::AbstractDict, ::Type{Missable{T}}; kwargs...) where T = _parse(dict, T; kwargs...)
-function _parse(dict::AbstractDict, T::Type; other_key = nothing)
+function _parse(dict::AbstractDict, T::Type; other_key = nothing, kwargs...)
     params = Dict{Symbol, Any}()
     fnames = fieldnames(T)
     other_key = if !isnothing(other_key)
@@ -92,7 +92,7 @@ function _parse(dict::AbstractDict, T::Type; other_key = nothing)
             continue
         end
         TF = fieldtype(T, skey)
-        params[skey] = _parse(value, TF; other_key = other_key)
+        params[skey] = _parse(value, TF; other_key = other_key, kwargs...)
     end
     T(; _to_generator(params)...)
 end
@@ -102,47 +102,7 @@ end
 
 Note that `T` must be a type that can be constructed by keywords, e.g., defined by `Base.@kwdef`
 """
-function deserialize(yaml, T::Type; other_key = nothing, kwargs...)
-    dict = YAML.load(yaml; kwargs...)
-    _parse(dict, T; other_key = other_key)
-end
-
-_to_toml(x::LITERAL_TYPES) = x
-_to_toml(x::Enum) = _rm_enum_prefix(x)
-
-_to_toml(dict::AbstractDict) = Dict(
-    key => _to_toml(value)
-    for (key, value) in dict
-)
-_to_toml(data) = Dict(
-    string(key) => _to_toml(getfield(data, key))
-    for key in fieldnames(typeof(data))
-)
-_to_toml(params::Union{AbstractVsSource, AbstractVsStrategy}) = Dict(
-    "type": typeof(source).name.name,
-    "params": invoke(_to_toml, Tuple{Any}, params)
-)
-
-function save_config(config::VsConfig, filename)
-    open(filename, "w") do fo
-        TOML.save(_to_toml, fo, config)
-    end
-end
-
-function _load_T(base_type, data)
-    type_name = Symbol(data["type"])
-    params = data["params"]
-    cmp_type(x) = false
-    cmp_type(x::DataType) = x.name.name == type_name
-    T = findfirst(_get_type, subtypes(base_type))
-    _parse(params, T)
-end
-
-function load_config(filename)
-    data = open(filename, "r") do fo
-        TOML.parse(fo)
-    end
-    data["strategy"] = _load_T(AbstractVsStrategy, data["strategy"])
-    data["source"] = _load_T(AbstractVsSource, data["source"])
-    VsConfig(; _to_generator(data)...)
+function deserialize(yaml, T::Type; dicttype = Dict, other_key = nothing, kwargs...)
+    dict = YAML.load(yaml; dicttype = dicttype)
+    _parse(dict, T; other_key = other_key, kwargs...)
 end

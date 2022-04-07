@@ -41,15 +41,18 @@ macro nullable(expr)
 end
 
 abstract type SimpleTypeWrapper{T} end
-macro type_wrapper(name, T, default=nothing)
+macro type_wrapper(name, T, default = :nothing, base_type = :SimpleTypeWrapper)
+    struct_name = name
     name = esc(name)
     T = esc(T)
-    default = esc(default)
-    default_constructor = if !isnothing(default)
+    default_constructor = if default ≢ :nothing
         :($name() = $name($default))
     end
+    if base_type ≢ :SimpleTypeWrapper
+        base_type = esc(base_type)
+    end
     quote
-        struct $name <: SimpleTypeWrapper{$T}
+        struct $struct_name <: $base_type{$T}
             value::$T
         end
         $default_constructor
@@ -59,6 +62,9 @@ macro type_wrapper(name, T, default=nothing)
         Base.print(io::IO, x::$name) = print(io, x.value)
         Base.show(io::IO, x::$name) = show(io, x.value)
         Base.getindex(x::$name) = x.value
+        Base.:(==)(x::$name, y::$name) = x.value == y.value
+        Base.:(==)(x::$name, y::$T) = x.value == y
+        Base.:(==)(x::$T, y::$name) = x == y.value
         @forward $name.value Base.getindex, Base.setindex!
     end
 end
