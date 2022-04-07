@@ -57,6 +57,7 @@ macro type_wrapper(name, T, default=nothing)
         Base.convert(::Type{$name}, x) = $name(convert($T, x))
         Base.convert(::Type{$T}, x::$name) = x.value
         Base.print(io::IO, x::$name) = print(io, x.value)
+        Base.show(io::IO, x::$name) = show(io, x.value)
         Base.getindex(x::$name) = x.value
         @forward $name.value Base.getindex, Base.setindex!
     end
