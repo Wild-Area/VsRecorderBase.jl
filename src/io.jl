@@ -29,14 +29,21 @@ end
 const LITERAL_TYPES = Union{Integer, AbstractFloat, Bool, Dates.DateTime, Dates.Time, Dates.Date, Symbol}
 
 enum_prefix(::Type{T}) where T <: Enum = ""
-function _rm_enum_prefix(x::T) where T <: Enum
+function enum_to_string(x::T) where T <: Enum
     prefix = enum_prefix(T)
     s = string(x)
     if prefix == ""
         s
     else
         split(s, prefix, limit = 2)[2]
-    end
+    end |> lowercase
+end
+function enum_from_string(s::String, ::Type{T}) where T <: Enum
+    values = instances(T)
+    s = lowercase(enum_prefix(T)) * to_snake_case(s)
+    values[findfirst(values) do x
+        lowercase(string(x)) == s
+    end]
 end
 
 _to_generator(d::AbstractDict) = (Symbol(key) => value for (key, value) in d)
@@ -56,13 +63,7 @@ _parse(val, T::Type; kwargs...) = convert(T, val)
 _parse(val, ::Type{TS}; kwargs...) where {T, TS <: SimpleTypeWrapper{T}} =
     TS(_parse(val, T; kwargs...))
 _parse(int::Integer, ::Type{T}; kwargs...) where T <: Enum = T(int)
-function _parse(s, ::Type{T}; kwargs...) where T <: Enum
-    values = instances(T)
-    s = lowercase(enum_prefix(T)) * to_snake_case(string(s))
-    values[findfirst(values) do x
-        lowercase(string(x)) == s
-    end]
-end
+_parse(s, ::Type{T}; kwargs...) where T <: Enum = enum_from_string(string(s), T)
 _parse(arr::AbstractArray, ::Type{<:AbstractArray{T}}; kwargs...) where T = [_parse(x, T; kwargs...) for x in arr]
 _parse(arr::AbstractArray, ::Type{T}; kwargs...) where T <: Tuple =
     tuple(_parse(x, eltype(TE); kwargs...) for (x, TE) in zip(arr, T.types))

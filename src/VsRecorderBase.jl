@@ -46,6 +46,7 @@ include("utils/template_match.jl")
 
 export open_video, open_camera,
     read_frame, load_image,
+    enum_to_string, enum_from_string,
     serialize, deserialize
 include("io.jl")
 include("yaml.jl")

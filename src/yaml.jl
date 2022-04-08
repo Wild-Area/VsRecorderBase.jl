@@ -2,7 +2,7 @@
 # From https://github.com/JuliaData/YAML.jl/blob/master/src/writer.jl
 module VsYAML
 
-using ..VsRecorderBase: LITERAL_TYPES, SimpleTypeWrapper, OrderedDict, _rm_enum_prefix
+using ..VsRecorderBase: LITERAL_TYPES, SimpleTypeWrapper, OrderedDict, enum_to_string
 
 # recursively print a dictionary
 _print(io::IO, dict::AbstractDict, level::Int=0, ignore_level::Bool=false) =
@@ -98,7 +98,7 @@ _print(
     io::IO,
     val::Enum,
     level::Int=0, ignore_level::Bool=false
-) = _print(io, _rm_enum_prefix(val), level, ignore_level)
+) = _print(io, enum_to_string(val), level, ignore_level)
 
 _print(io::IO, val::Tuple, level::Int=0, ignore_level::Bool=false) =
     _print(io, collect(val), level, ignore_level)
