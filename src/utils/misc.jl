@@ -3,6 +3,8 @@ const ∞ = 20070128.0
 const Missable{T} = Union{Missing, T}
 const Nullable{T} = Union{Nothing, T}
 
+±(center, half) = center - half : center + half
+
 function _make_nullable(expr, T, default)
     @assert expr.head ≡ :struct
     fields = expr.args[3].args

@@ -1,14 +1,19 @@
 module VsRecorderBase
 
-import Dates, TOML, YAML
-using DataStructures: Queue, enqueue!, dequeue!, OrderedDict
+import Dates, TOML
 using LinearAlgebra
+
+import DataStructures
+import YAML
+using DataStructures: Queue, enqueue!, dequeue!,
+    OrderedDict
 using FileIO: Stream, @format_str
 
 using Reexport: @reexport
 
 @reexport using VideoIO, Images
 
+using StringDistances
 using Tesseract, ImageFiltering
 using MacroTools: @forward
 
@@ -24,8 +29,12 @@ include("types.jl")
 
 export Missable, Nullable,
     @missable, @nullable,
-    SimpleTypeWrapper, @type_wrapper
+    SimpleTypeWrapper, @type_wrapper,
+    ∞, ±
 include("utils/misc.jl")
+
+export BoundedBinaryHeap, data_search
+include("utils/data_search.jl")
 
 export to_gray_image, blur,
     color_distance, floodfill, floodfill!,
@@ -39,7 +48,7 @@ export Rect, subimage, topleft, is_gray
 include("utils/image_data.jl")
 
 export image_distance, block,
-    tempalte_match_all, tempalte_match,
+    template_match_all, template_match,
     table_search
 export SpriteSheet
 include("utils/template_match.jl")

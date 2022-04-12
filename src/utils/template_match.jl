@@ -10,7 +10,7 @@ image_distance(
     img2::AbstractMatrix,
     weights::AbstractMatrix,
     weights_sum = sum(weights)
-) = sum((norm.(float(img1) .- img2) .^ 2) .* weights) / weights_sum
+) = sum((norm.(float(img1) .- img2, (2f0,)) .^ 2) .* weights) / weights_sum
 image_distance(
     img1::AbstractMatrix{<:Gray},
     img2::AbstractMatrix{<:RGB},
@@ -19,29 +19,56 @@ image_distance(
 ) = image_distance(img1, Gray.(img2), weights, weights_sum)
 
 
-function tempalte_match_all(template, img, indices; σ = 0.5f0)
+function template_match_all(
+    template, img;
+    indices = axes(img),
+    σ = 0.5f0,
+    mask = nothing,
+    border = Fill(1)
+)
     if σ > 0
         template, img = blur(template, σ), blur(img, σ)
     end
-    f = (window) -> image_distance(window, template)
+    h, w = (size(template) .+ 1) .÷ 2 .* 2 .- 1
+    template = @view template[1:h, 1:w]
+    f = if isnothing(mask)
+        (window) -> image_distance(window, template)
+    else
+        mask = @view mask[1:h, 1:w]
+        (window) -> image_distance(window, template, mask)
+    end
     window_size = size(template)
-    dists = mapwindow(f, img, window_size, indices=indices, border=Fill(1))
-    sortperm(dists), dists
+    dists = mapwindow(
+        f, img, window_size,
+        indices = indices,
+        border = border
+    )
+    perms = sortperm(reshape(dists, :))
+    perms, dists
 end
 
 """
-    tempalte_match(template, image, indices; σ = 0.5f0)
+    template_match(template, image; indices = axes(image) σ = 0.5f0, mask = nothing, border = Fill(1))
 
 Match `template` in `image`. `indices` are the points of the centers of windows in the image.
 
 If `σ ≤ 0`, no blur is applied.
 """
-function tempalte_match(
-    template, img, indices = axes(img);
-    σ = 0.5f0
+function template_match(
+    template, img;
+    indices = axes(img),
+    σ = 0.5f0,
+    mask = nothing,
+    border = Fill(1)
 )
-    perms, dists = tempalte_match_all(template, img, indices; σ = σ)
-    perms[1], dists[1]
+    perms, dists = template_match_all(
+        template, img;
+        indices = indices,
+        σ = σ,
+        mask = mask,
+        border = border
+    )
+    perms[1], dists[perms[1]]
 end
 
 
