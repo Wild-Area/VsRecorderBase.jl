@@ -37,16 +37,16 @@ function Base.push!(h::BoundedBinaryHeap, v)
 end
 
 """
-    data_search(collection, x; n = 10, dist = Levenshtein())
+    data_search_n(collection, x; n = 10, dist = Levenshtein())
 
 Search for `n` closest matches in `collection` for `x`.
 
 Returns a list of (distance, index)
 """
-function data_search(
+function data_search_n(
     collection, x;
     n = 10,
-    dist = Levenshtein()
+    dist = Hamming()
 )
     indices = eachindex(collection)
     T = Tuple{Float64, eltype(indices)}
@@ -61,3 +61,5 @@ function data_search(
     end
     @view dists[end:-1:1]
 end
+
+data_search(collection, x; kwargs...) = data_search_n(collection, x, n = 1, kwargs...)[1][2]

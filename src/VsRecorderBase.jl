@@ -15,6 +15,7 @@ using Reexport: @reexport
 
 using StringDistances
 using Tesseract, ImageFiltering
+using Suppressor
 using MacroTools: @forward
 
 
@@ -33,8 +34,11 @@ export Missable, Nullable,
     ∞, ±
 include("utils/misc.jl")
 
-export BoundedBinaryHeap, data_search
+export BoundedBinaryHeap, data_search_n, data_search
 include("utils/data_search.jl")
+
+export remove_spaces, parse_int
+include("utils/string_utils.jl")
 
 export to_gray_image, blur,
     color_distance, floodfill, floodfill!,

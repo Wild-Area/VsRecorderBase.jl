@@ -67,6 +67,7 @@ macro type_wrapper(name, T, default = :nothing, base_type = :SimpleTypeWrapper)
         Base.:(==)(x::$name, y::$name) = x.value == y.value
         Base.:(==)(x::$name, y::$T) = x.value == y
         Base.:(==)(x::$T, y::$name) = x == y.value
+        Base.isless(x::$name, y::$name) = isless(x.value, y.value)
         @forward $name.value Base.getindex, Base.setindex!
     end
 end
