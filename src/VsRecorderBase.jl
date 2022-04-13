@@ -1,22 +1,22 @@
 module VsRecorderBase
 
+using Reexport: @reexport
+
 import Dates, TOML
-using LinearAlgebra
 
 import DataStructures
 import YAML
-using DataStructures: Queue, enqueue!, dequeue!,
+@reexport using DataStructures: Queue, enqueue!, dequeue!,
     OrderedDict
 using FileIO: Stream, @format_str
 
-using Reexport: @reexport
-
+@reexport using LinearAlgebra, Statistics
 @reexport using VideoIO, Images
 
-using StringDistances
+import StringDistances
 using Tesseract, ImageFiltering
 using Suppressor
-using MacroTools: @forward
+@reexport using MacroTools: @forward
 
 
 export AbstractVsStrategy, AbstractVsSource, AbstractVsScene, AbstractVsStream,
@@ -34,7 +34,9 @@ export Missable, Nullable,
     ∞, ±
 include("utils/misc.jl")
 
-export BoundedBinaryHeap, data_search_n, data_search
+export BoundedBinaryHeap,
+    find_closest_n, find_closest,
+    data_search_n, data_search
 include("utils/data_search.jl")
 
 export remove_spaces, parse_int
@@ -64,8 +66,12 @@ export open_video, open_camera,
 include("io.jl")
 include("yaml.jl")
 
-export create_ocr_instance, ocr,
-    download_ocr_language
+export create_ocr_instance,
+    download_ocr_language,
+    default_ocr_instance,
+    ocr, ocr_tsv,
+    is_cjk,
+    init_multiple_ocr!, ocr_multiple_lang
 include("ocr.jl")
 
 export DefaultStrategy

@@ -20,6 +20,8 @@ end
 download_ocr_language(lang, target = OCR_DATA_DIR) =
     Tesseract.download_languages(lang, target = target)
 
+default_ocr_instance(ctx::VsContext) = ctx.ocr_instances[ctx.config.ocr_language]
+
 function get_pix(img::AbstractMatrix)
     f = IOBuffer()
     s = Stream{format"PNG"}(f)
@@ -42,6 +44,12 @@ function _set_page_seg_mode(inst::TessInst, mode::PageSegMode)
     )
 end
 
+function _ocr(img::AbstractMatrix, instance::TessInst; resolution = 72, page_seg_mode = PSM_SINGLE_LINE)
+    pix = get_pix(img)
+    tess_image(instance, pix)
+    tess_resolution(instance, resolution)
+    _set_page_seg_mode(instance, page_seg_mode)
+end
 
 """
     ocr([Type=String], image, language/instance/context; resolution = 72, strip = true)
@@ -56,10 +64,7 @@ function ocr(
     strip = true,
     page_seg_mode::PageSegMode = PSM_SINGLE_LINE
 )
-    pix = get_pix(img)
-    tess_image(instance, pix)
-    tess_resolution(instance, resolution)
-    _set_page_seg_mode(instance, page_seg_mode)
+    _ocr(img, instance; resolution = resolution, page_seg_mode = page_seg_mode)
     text = tess_text(instance)
     if strip
         text = Base.strip(text)
@@ -81,8 +86,11 @@ ocr(
     ::Type{String},
     img::AbstractMatrix,
     ctx::VsContext;
+    language = ctx.config.ocr_language,
     kwargs...
-) = ocr(String, img, ctx.ocr_instance; kwargs...)
+) = let text = ocr(String, img, ctx.ocr_instances[language]; kwargs...)
+    is_cjk(language) ? remove_spaces(text) : text
+end
 
 function ocr(::Type{Int}, img::AbstractMatrix, args...; default::Int = 0, kwargs...)
     text = ocr(String, img, args...; kwargs...)
@@ -90,3 +98,40 @@ function ocr(::Type{Int}, img::AbstractMatrix, args...; default::Int = 0, kwargs
 end
 
 ocr(img::AbstractMatrix, args...; kwargs...) = ocr(String, img, args...; kwargs...)
+
+function ocr_tsv(img, instance; kwargs...)
+    _ocr(img, instance; kwargs...)
+    tess_parsed_tsv(instance)
+end
+
+is_cjk(lang) = split(lang, '+') ∩ ("chi_sim", "chi_tra", "jpn", "kor") |> !isempty
+function init_multiple_ocr!(ctx::VsContext, languages::AbstractVector{<:AbstractString}, tess_datapath = OCR_DATA_DIR)
+    for lang in languages
+        lang in keys(ctx.ocr_instances) && continue
+        ctx.ocr_instances[lang] = create_ocr_instance(lang, tess_datapath = tess_datapath)
+    end
+    ctx
+end
+
+function ocr_multiple_lang(img::AbstractMatrix, ctx::VsContext; prepare = true)
+    if prepare
+        img = prepare_text_for_ocr(img)
+    end
+    _, best_lang, best_words = find_closest(
+        ctx.ocr_instances,
+        should_break = (x) -> x[1] < 20  # Set a threshold to break early
+    ) do (lang, inst)
+        tsvs = [t for t in ocr_tsv(img, inst) if t.level == 5]  # filter the words
+        average_conf = if length(tsvs) == 0
+            -1.0
+        else
+            mean(t.conf for t in tsvs)
+        end
+        100 - average_conf, lang, tsvs
+    end
+    if length(best_words) == 0
+        ""
+    else
+        join((t.text for t in best_words), is_cjk(best_lang) ? "" : " ")
+    end
+end

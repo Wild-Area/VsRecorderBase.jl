@@ -107,8 +107,7 @@ function table_search(
         template = imresize(template, rect_size)
     end
 
-    closest_dist, closest_i = ∞, 0
-    for i in indices
+    _, closest_i = find_closest(indices) do i
         block_img = block(table, i, table_size, block_size)
         subsection = subimage(block_img, rect)
         dist = if isnothing(mask)
@@ -118,10 +117,7 @@ function table_search(
             submask = subimage(block_mask, rect)
             image_distance(subsection, template, submask)
         end
-        if dist < closest_dist
-            closest_dist = dist
-            closest_i = i
-        end
+        dist, i
     end
     closest_i
 end

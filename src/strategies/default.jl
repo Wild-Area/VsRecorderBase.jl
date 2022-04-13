@@ -83,16 +83,15 @@ function _get_scene_type(ctx, img)
     use_gray_image = config.use_gray_image
 
     img = _normalize(img, use_gray_image, (height, width))
-    closest_scene_type, closest_distance = nothing, typemax(Float32)
-    for (scene_type, desc) in descriptors
-        should_check(scene_type, ctx) || continue
+    _, closest_scene_type = find_closest(
+        descriptors,
+        should_break = x -> x[1] < threshold
+    ) do (scene_type, desc)
+        should_check(scene_type, ctx) || return nothing
         distance = image_distance(img, desc.image, desc.mask, desc.mask_sum)
-        distance < threshold && return scene_type
-        if distance < closest_distance
-            closest_scene_type = scene_type
-            closest_distance = distance
-        end
+        distance, scene_type
     end
+
     closest_scene_type
 end
 

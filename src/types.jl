@@ -21,7 +21,7 @@ Base.@kwdef struct VsFrame{T, TM <: AbstractMatrix{T}} <: AbstractMatrix{T}
     time::Rational{Int64} = 0 // 1
 end
 image(frame::VsFrame) = frame.image
-time(frame::VsFrame) = frame.time
+Base.time(frame::VsFrame) = frame.time
 @forward VsFrame.image Base.length, Base.size, Base.getindex, Base.setindex!
 
 Base.@kwdef struct VsContextData
@@ -53,8 +53,8 @@ Base.@kwdef mutable struct VsContext{
 }
     config::VsConfig{TStrategy, TSource}
     stream::TStream
-    ocr_instance::TessInst
-    ocr_instance_eng::TessInst
+    # Language => TessInst
+    ocr_instances::OrderedDict{String, TessInst}
     current_frame::Union{VsFrame, Nothing} = nothing
     current_scene::Union{AbstractVsScene, Nothing} = nothing
     current_time_skippable::Float64 = 0.0
@@ -107,4 +107,3 @@ vs_tryparse_scene(
     ::Union{VsContext, Nothing} = nothing;
     force::Bool = false
 ) = nothing
-
