@@ -1,9 +1,9 @@
 function initialize(config::VsConfig, stream::Union{AbstractVsStream, Nothing} = nothing)
     ocr_instances = OrderedDict(
-        config.ocr_language => @suppress create_ocr_instance(config.ocr_language)
+        config.ocr_language => create_ocr_instance(config.ocr_language)
     )
     if config.ocr_language != "eng"
-        ocr_instances["eng"] = @suppress create_ocr_instance("eng")
+        ocr_instances["eng"] = create_ocr_instance("eng")
     end
     ctx = VsContext(
         config = config,

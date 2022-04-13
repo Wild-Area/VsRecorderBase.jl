@@ -48,15 +48,14 @@ end
 """Context."""
 Base.@kwdef mutable struct VsContext{
     TStrategy <: AbstractVsStrategy,
-    TSource <: AbstractVsSource,
-    TStream <: Union{AbstractVsStream, Nothing}
+    TSource <: AbstractVsSource
 }
     config::VsConfig{TStrategy, TSource}
-    stream::TStream
+    stream::Nullable{AbstractVsStream} = nothing
     # Language => TessInst
     ocr_instances::OrderedDict{String, TessInst}
-    current_frame::Union{VsFrame, Nothing} = nothing
-    current_scene::Union{AbstractVsScene, Nothing} = nothing
+    current_frame::Nullable{VsFrame} = nothing
+    current_scene::Nullable{AbstractVsScene} = nothing
     current_time_skippable::Float64 = 0.0
     data::VsContextData = VsContextData()
 end

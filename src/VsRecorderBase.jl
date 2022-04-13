@@ -18,6 +18,11 @@ using Tesseract, ImageFiltering
 using Suppressor
 @reexport using MacroTools: @forward
 
+export Missable, Nullable,
+    @missable, @nullable,
+    SimpleTypeWrapper, @type_wrapper,
+    ∞, ±
+include("utils/misc.jl")
 
 export AbstractVsStrategy, AbstractVsSource, AbstractVsScene, AbstractVsStream,
     VsStream, VsFrame,
@@ -27,12 +32,6 @@ export AbstractVsStrategy, AbstractVsSource, AbstractVsScene, AbstractVsStream,
 export image, time
 export vs_setup, vs_init!, vs_parse_frame!, vs_update!, vs_result, vs_tryparse_scene
 include("types.jl")
-
-export Missable, Nullable,
-    @missable, @nullable,
-    SimpleTypeWrapper, @type_wrapper,
-    ∞, ±
-include("utils/misc.jl")
 
 export BoundedBinaryHeap,
     find_closest_n, find_closest,
