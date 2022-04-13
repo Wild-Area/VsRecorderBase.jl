@@ -38,6 +38,8 @@ function template_match_all(
         (window) -> image_distance(window, template, mask)
     end
     window_size = size(template)
+    # `mapwindow` is not stable for one line of pixels:
+    # https://github.com/JuliaImages/ImageFiltering.jl/issues/169
     dists = mapwindow(
         f, img, window_size,
         indices = indices,

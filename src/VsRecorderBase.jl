@@ -15,7 +15,6 @@ using FileIO: Stream, @format_str
 
 import StringDistances
 using Tesseract, ImageFiltering
-using Suppressor
 @reexport using MacroTools: @forward
 
 export Missable, Nullable,

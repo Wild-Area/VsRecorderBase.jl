@@ -64,6 +64,7 @@ function ocr(
     strip = true,
     page_seg_mode::PageSegMode = PSM_SINGLE_LINE
 )
+    length(img) == 0 && return ""
     _ocr(img, instance; resolution = resolution, page_seg_mode = page_seg_mode)
     text = tess_text(instance)
     if strip
@@ -99,7 +100,8 @@ end
 
 ocr(img::AbstractMatrix, args...; kwargs...) = ocr(String, img, args...; kwargs...)
 
-function ocr_tsv(img, instance; kwargs...)
+function ocr_tsv(img::AbstractMatrix, instance; kwargs...)
+    length(img) == 0 && return ""
     _ocr(img, instance; kwargs...)
     tess_parsed_tsv(instance)
 end

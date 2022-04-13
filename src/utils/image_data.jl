@@ -35,7 +35,12 @@ function subimage(img::AbstractMatrix, rect::Rect)
     else
         rect.top, rect.left, rect.height, rect.width
     end
-    s = @view img[top:top + height - 1, left:left + width - 1]
+    h, w = size(img)
+    top = max(top, 1)
+    bottom = min(top + height - 1, h)
+    left = max(left, 1)
+    right = min(left + width - 1, w)
+    s = @view img[top:bottom, left:right]
     SubImage(s, rect)
 end
 
