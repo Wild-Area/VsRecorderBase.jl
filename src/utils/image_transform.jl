@@ -99,7 +99,24 @@ function blend_color(blend::AbstractMatrix, base::AbstractMatrix)
     RGB.(new_img)
 end
 
-function prepare_text_for_ocr(img::AbstractMatrix, threshold = 0.35f0, white_text = true)
+function bounding_rect(img::AbstractMatrix, background_color)
+    h, w = size(img)
+    compare = !=(background_color)
+    f = (func, xs, init) -> func((x for x in xs if !isnothing(x)), init = init)
+    top = f(minimum, (findfirst(compare, view(img, :, x)) for x in 1:w), h)
+    bottom = f(maximum, (findlast(compare, view(img, :, x)) for x in 1:w), 0)
+    left = f(minimum, (findfirst(compare, view(img, y, :)) for y in 1:h), w)
+    right = f(maximum, (findlast(compare, view(img, y, :)) for y in 1:h), 0)
+    Rect((top, left), (bottom - top + 1, right - left + 1))
+end
+
+shrink(img::AbstractMatrix, background_color = img[1, 1]) = img[bounding_rect(img, background_color)]
+
+function prepare_text_for_ocr(
+    img::AbstractMatrix;
+    threshold = 0.35f0,
+    white_text = true
+)
     img = Gray.(img)
     if white_text
         img = complement.(img)

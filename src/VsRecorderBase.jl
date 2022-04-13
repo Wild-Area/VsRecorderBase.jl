@@ -47,6 +47,7 @@ export to_gray_image, blur,
     draw_outline, draw_outline!,
     cycled_translate,
     blend_color,
+    bounding_rect, shrink,
     prepare_text_for_ocr
 include("utils/image_transform.jl")
 

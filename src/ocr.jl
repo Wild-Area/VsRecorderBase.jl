@@ -113,10 +113,7 @@ function init_multiple_ocr!(ctx::VsContext, languages::AbstractVector{<:Abstract
     ctx
 end
 
-function ocr_multiple_lang(img::AbstractMatrix, ctx::VsContext; prepare = true)
-    if prepare
-        img = prepare_text_for_ocr(img)
-    end
+function ocr_multiple_lang(img::AbstractMatrix, ctx::VsContext)
     _, best_lang, best_words = find_closest(
         ctx.ocr_instances,
         should_break = (x) -> x[1] < 20  # Set a threshold to break early
