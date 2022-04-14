@@ -17,8 +17,8 @@ import StringDistances
 using Tesseract, ImageFiltering
 @reexport using MacroTools: @forward
 
-export Missable, Nullable,
-    @missable, @nullable,
+export Missable, Nullable, @missable, @nullable,
+    Yes,
     SimpleTypeWrapper, @type_wrapper,
     ∞, ±
 include("utils/misc.jl")

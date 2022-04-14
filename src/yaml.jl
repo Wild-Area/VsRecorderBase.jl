@@ -3,6 +3,7 @@
 module VsYAML
 
 using ..VsRecorderBase: LITERAL_TYPES, SimpleTypeWrapper, OrderedDict, enum_to_string
+import ..VsRecorderBase: _serialize_convert
 
 # recursively print a dictionary
 _print(io::IO, dict::AbstractDict, level::Int=0, ignore_level::Bool=false) =
@@ -41,10 +42,15 @@ function _print(io::IO, pair::Pair, level::Int=0, ignore_level::Bool=false)
     value = pair[2]
     if value isa AbstractDict || value isa AbstractVector
         print(io, isempty(value) ? " " : "\n") # a line break is needed before a recursive structure
-    elseif value isa LITERAL_TYPES || value isa Enum || value isa SimpleTypeWrapper || value isa AbstractString
+    elseif value isa LITERAL_TYPES || value isa AbstractString
         print(io, " ") # a whitespace character is needed before a single value
     else
-        print(io, "\n")
+        p = _serialize_convert(value)
+        if p isa AbstractDict || p isa AbstractVector
+            print(io, isempty(p) ? " " : "\n")
+        else
+            print(io, " ")
+        end
     end
     _print(io, value, level + 1) # print the value
 end
@@ -94,26 +100,20 @@ _print(
     level::Int=0, ignore_level::Bool=false
 ) = println(io, val)
 
-_print(
-    io::IO,
-    val::Enum,
-    level::Int=0, ignore_level::Bool=false
-) = _print(io, enum_to_string(val), level, ignore_level)
-
-_print(io::IO, val::Tuple, level::Int=0, ignore_level::Bool=false) =
-    _print(io, collect(val), level, ignore_level)
-
-_print(io::IO, val::SimpleTypeWrapper, level::Int=0, ignore_level::Bool=false) =
-    _print(io, val.value, level, ignore_level)
-
-function _print(io::IO, val::T, level::Int=0, ignore_level::Bool=false) where T
-    dict = OrderedDict{Symbol, Any}()
+_serialize_convert(val::Enum) = enum_to_string(val)
+_serialize_convert(val::Tuple) = collect(val)
+_serialize_convert(val::T) where T = let dict = OrderedDict{Symbol, Any}()
     for key in fieldnames(T)
         value = getfield(val, key)
         ismissing(value) && continue
         dict[key] = value
     end
-    _print(io, dict, level, ignore_level)
+    dict
+end
+
+function _print(io::IO, val::T, level::Int=0, ignore_level::Bool=false) where T
+    p = _serialize_convert(val)
+    _print(io, p, level, ignore_level)
 end
 
 function yaml(data::Any, prefix::AbstractString="")

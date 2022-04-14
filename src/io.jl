@@ -60,8 +60,6 @@ serialize(object) = VsYAML.yaml(object)
 
 _parse(val, ::Type{Any}; kwargs...) = val
 _parse(val, T::Type; kwargs...) = convert(T, val)
-_parse(val, ::Type{TS}; kwargs...) where {T, TS <: SimpleTypeWrapper{T}} =
-    TS(_parse(val, T; kwargs...))
 _parse(int::Integer, ::Type{T}; kwargs...) where T <: Enum = T(int)
 _parse(s, ::Type{T}; kwargs...) where T <: Enum = enum_from_string(string(s), T)
 _parse(arr::AbstractArray, ::Type{<:AbstractArray{T}}; kwargs...) where T = [_parse(x, T; kwargs...) for x in arr]
@@ -71,8 +69,6 @@ _parse(dict::AbstractDict, T::Type{<:AbstractDict{TKey, TValue}}; kwargs...) whe
     _parse(key, TKey; kwargs...) => _parse(value, TValue; kwargs...)
     for (key, value) in dict
 )
-_parse(dict::AbstractDict, ::Type{Nullable{T}}; kwargs...) where T = _parse(dict, T; kwargs...)
-_parse(dict::AbstractDict, ::Type{Missable{T}}; kwargs...) where T = _parse(dict, T; kwargs...)
 function _parse(dict::AbstractDict, T::Type; other_key = nothing, kwargs...)
     params = Dict{Symbol, Any}()
     fnames = fieldnames(T)

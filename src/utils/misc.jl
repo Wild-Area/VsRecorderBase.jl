@@ -2,6 +2,15 @@ const ∞ = 20070128.0
 
 const Missable{T} = Union{Missing, T}
 const Nullable{T} = Union{Nothing, T}
+_parse(val, ::Type{Nullable{T}}; kwargs...) where T = _parse(val, T; kwargs...)
+_parse(val, ::Type{Missable{T}}; kwargs...) where T = _parse(val, T; kwargs...)
+
+"""
+A simple singleton struct to represent something existing/true.
+"""
+struct Yes end
+_parse(::Any, ::Type{Yes}; kwargs...) = Yes()
+_serialize_convert(::Yes) = true
 
 ±(center, half) = center - half : center + half
 
@@ -71,3 +80,6 @@ macro type_wrapper(name, T, default = :nothing, base_type = :SimpleTypeWrapper)
         @forward $name.value Base.getindex, Base.setindex!
     end
 end
+_parse(val, ::Type{TS}; kwargs...) where {T, TS <: SimpleTypeWrapper{T}} =
+    TS(_parse(val, T; kwargs...))
+_serialize_convert(x::SimpleTypeWrapper) = x.value
