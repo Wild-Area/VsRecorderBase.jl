@@ -32,8 +32,10 @@ export image, time
 export vs_setup, vs_init!, vs_parse_frame!, vs_update!, vs_result, vs_tryparse_scene
 include("types.jl")
 
-export BoundedBinaryHeap,
-    find_closest_n, find_closest,
+export BoundedBinaryHeap
+include("utils/data_structures.jl")
+
+export find_closest_n, find_closest,
     data_search_n, data_search
 include("utils/data_search.jl")
 

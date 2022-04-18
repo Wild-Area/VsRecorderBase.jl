@@ -129,8 +129,8 @@ function ocr_multiple_lang(img::AbstractMatrix, ctx::VsContext)
         100 - average_conf, lang, tsvs
     end
     if length(best_words) == 0
-        ""
+        "", best_lang
     else
-        join((t.text for t in best_words), is_cjk(best_lang) ? "" : " ")
+        join((t.text for t in best_words), is_cjk(best_lang) ? "" : " "), best_lang
     end
 end
