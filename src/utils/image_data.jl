@@ -55,12 +55,12 @@ subimage(
 )
 
 subimage(img::SubImage, rect::Rect) = let pr = img.rect
-    @assert pr.resolution == rect.resolution
+    @assert rect.resolution == (0, 0) || pr.resolution == rect.resolution
     subimage(
         parent(img.image),
         (pr.top + rect.top - 1, pr.left + rect.left - 1),
         (rect.height, rect.width),
-        resolution = rect.resolution
+        resolution = pr.resolution
     )
 end
 
